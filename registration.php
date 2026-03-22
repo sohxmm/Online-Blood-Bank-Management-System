@@ -407,7 +407,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
       <div class="submit-circle">→</div>
       Register as Donor
     </button>
-    <a href="login.html" class="login-link">
+    <a href="login.php" class="login-link">
       Already registered? Sign in
       <div class="login-link-arrow">↗</div>
     </a>
