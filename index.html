@@ -1841,16 +1841,14 @@ body.dark-mode .theme-toggle-icon { transform: rotate(25deg); }
 /* ═══════════════════════════════════════════
    DATA
 ═══════════════════════════════════════════ */
-const BLOOD_TYPES = [
-  { type: 'O+',  units: 15, status: 'available' },
-  { type: 'A+',  units: 12, status: 'available' },
-  { type: 'B+',  units: 8,  status: 'available' },
-  { type: 'AB+', units: 5,  status: 'available' },
-  { type: 'O−',  units: 3,  status: 'critical'  },
-  { type: 'A−',  units: 6,  status: 'available' },
-  { type: 'B−',  units: 2,  status: 'critical'  },
-  { type: 'AB−', units: 1,  status: 'critical'  },
-];
+const typeMap = {
+  'O+':'O+','A+':'A+','B+':'B+','AB+':'AB+',
+  'O-':'O−','A-':'A−','B-':'B−','AB-':'AB−'
+};
+const bubbleLabels = {
+  'O+':0,'A+':1,'B+':2,'AB+':3,
+  'O−':4,'A−':5,'B−':6,'AB−':7
+};
 
 const INDIA_STATES = {
   "Andhra Pradesh":   ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool"],
@@ -2160,27 +2158,58 @@ document.getElementById('teamModalClose').addEventListener('click', () => {
 /* ═══════════════════════════════════════════
    BLOOD TYPES SLIDER (drag)
 ═══════════════════════════════════════════ */
-const slider = document.getElementById('bloodSlider');
+async function buildBloodCards() {
+  let BLOOD_TYPES = [
+    { type: 'O+',  units: 15, status: 'available' },
+    { type: 'A+',  units: 12, status: 'available' },
+    { type: 'B+',  units: 8,  status: 'available' },
+    { type: 'AB+', units: 5,  status: 'available' },
+    { type: 'O−',  units: 3,  status: 'critical'  },
+    { type: 'A−',  units: 6,  status: 'available' },
+    { type: 'B−',  units: 2,  status: 'critical'  },
+    { type: 'AB−', units: 1,  status: 'critical'  },
+  ];
 
-// Generate cards
-BLOOD_TYPES.forEach((bt, i) => {
-  const card = document.createElement('div');
-  card.className = 'blood-card';
-  card.innerHTML = `
-    <div class="blood-card-num">${String(i+1).padStart(2,'0')} / 08</div>
-    <div class="blood-card-status ${bt.status}"></div>
-    <div class="blood-card-type">${bt.type}</div>
-    <div class="blood-card-units"><strong>${bt.units}</strong> units available</div>
-    <button class="blood-card-cta">
-      Make Request
-      <div class="blood-card-cta-arrow">↗</div>
-    </button>
-  `;
-  card.querySelector('.blood-card-cta').addEventListener('click', () => {
-    alert(`Request for ${bt.type} blood submitted. We'll confirm shortly.`);
+  try {
+    const res  = await fetch('get_inventory.php');
+    const data = await res.json();
+    BLOOD_TYPES = data.inventory.map(item => ({
+      type:   typeMap[item.bloodGroup] || item.bloodGroup,
+      units:  item.units,
+      status: item.critical ? 'critical' : 'available'
+    }));
+
+    // Update bubble-scene numbers on homepage
+    const bubbleNums = document.querySelectorAll('.bubble-scene .bubble-num');
+    BLOOD_TYPES.forEach(bt => {
+      const idx = bubbleLabels[bt.type];
+      if (bubbleNums[idx] !== undefined) bubbleNums[idx].textContent = bt.units;
+    });
+  } catch(e) {
+    console.warn('Using fallback inventory data:', e);
+  }
+
+  const slider = document.getElementById('bloodSlider');
+  BLOOD_TYPES.forEach((bt, i) => {
+    const card = document.createElement('div');
+    card.className = 'blood-card';
+    card.innerHTML = `
+      <div class="blood-card-num">${String(i+1).padStart(2,'0')} / 08</div>
+      <div class="blood-card-status ${bt.status}"></div>
+      <div class="blood-card-type">${bt.type}</div>
+      <div class="blood-card-units"><strong>${bt.units}</strong> units available</div>
+      <button class="blood-card-cta">
+        Make Request
+        <div class="blood-card-cta-arrow">↗</div>
+      </button>
+    `;
+    card.querySelector('.blood-card-cta').addEventListener('click', () => {
+      window.location.href = 'make-request.html';
+    });
+    slider.appendChild(card);
   });
-  slider.appendChild(card);
-});
+}
+buildBloodCards();
 
 // Drag scroll
 let isDown = false, startX, scrollLeft;
