@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Blood Bank Management System</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   RESET & ROOT
+═══════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cream: #FAF7F4;
+  --cream-dark: #F0EBE5;
+  --black: #1A0A0D;
+  --black-soft: #2A1018;
+  --red: #B5121F;
+  --red-deep: #7A0A13;
+  --red-soft: #D94050;
+  --gray: #7A6065;
+  --gray-light: #C9B8BC;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+  --nav-h: 80px;
+}
+
+html { scroll-behavior: auto; }
+
+body {
+  font-family: var(--sans);
+  background: var(--cream);
+  color: var(--black);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ═══════════════════════════════════════════
+   CUSTOM CURSOR
+═══════════════════════════════════════════ */
+.cursor-dot {
+  width: 8px; height: 8px;
+  background: #FAF7F4;
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 99999;
+  transform: translate(-50%, -50%);
+  transition: width .2s, height .2s, background .2s;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1.5px solid rgba(250,247,244,0.6);
+  border-radius: 50%;
+  position: fixed; top: 0; left: 0;
+  pointer-events: none; z-index: 99998;
+  transform: translate(-50%, -50%);
+  transition: width .35s ease, height .35s ease, border-color .2s;
+}
+.cursor-dot.on-light { background: #141414; }
+.cursor-ring.on-light { border-color: rgba(20,20,20,0.5); }
+.cursor-dot.hover { width: 12px; height: 12px; background: var(--red); }
+.cursor-ring.hover { width: 56px; height: 56px; border-color: var(--red); }
+
+/* ═══════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 48px;
+  z-index: 1000;
+  background: transparent;
+  transition: background .4s ease;
+}
+nav.scrolled { background: rgba(250,247,244,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(181,18,31,.08); }
+
+/* Nav text is cream when sitting over the dark hero */
+nav:not(.scrolled) .nav-logo-text,
+nav:not(.scrolled) .nav-services-btn,
+nav:not(.scrolled) .nav-cta { color: #FAF7F4; }
+
+nav:not(.scrolled) .nav-services-btn .lines span { background: #FAF7F4; }
+nav:not(.scrolled) .nav-cta-arrow { border-color: rgba(250,247,244,0.5); }
+nav:not(.scrolled) .nav-logo-text em { color: #D94050; }
+
+/* Smooth colour transition as it scrolls */
+nav .nav-logo-text,
+nav .nav-services-btn,
+nav .nav-cta,
+nav .nav-cta-arrow { transition: color .4s ease, border-color .4s ease; }
+
+.nav-logo {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none; color: var(--black);
+  cursor: none;
+}
+.nav-logo img {
+  width: 44px; height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0px transparent);
+}
+.nav-logo-text {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+.nav-logo-text em { font-style: italic; color: var(--red); }
+
+/* Hamburger / services toggle */
+.nav-services-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: none;
+  font-family: var(--sans); font-size: .8rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--black); cursor: none;
+  padding: 10px 0;
+}
+.nav-services-btn .lines { display: flex; flex-direction: column; gap: 4px; }
+.nav-services-btn .lines span {
+  display: block; height: 1.5px; background: var(--black);
+  transition: all .3s ease;
+}
+.nav-services-btn .lines span:nth-child(1) { width: 22px; }
+.nav-services-btn .lines span:nth-child(2) { width: 15px; }
+.nav-services-btn .lines span:nth-child(3) { width: 22px; }
+.nav-services-btn.open .lines span:nth-child(1) { width: 22px; transform: translateY(5.5px) rotate(45deg); }
+.nav-services-btn.open .lines span:nth-child(2) { opacity: 0; }
+.nav-services-btn.open .lines span:nth-child(3) { width: 22px; transform: translateY(-5.5px) rotate(-45deg); }
+
+.nav-right { display: flex; align-items: center; gap: 32px; }
+
+.nav-cta {
+  display: flex; align-items: center; gap: 8px;
+  background: none; border: none; padding: 0;
+  font-family: var(--sans); font-size: .8rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--black); cursor: none; text-decoration: none;
+  position: relative;
+}
+.nav-cta-arrow {
+  width: 32px; height: 32px;
+  border: 1.5px solid var(--black);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+  transition: all .3s ease;
+}
+.nav-cta:hover .nav-cta-arrow {
+  background: var(--black); color: var(--cream);
+  transform: rotate(45deg);
+}
+
+/* ═══════════════════════════════════════════
+   SERVICES OVERLAY
+═══════════════════════════════════════════ */
+.services-overlay {
+  position: fixed; inset: 0;
+  background: var(--black);
+  z-index: 999;
+  display: flex; align-items: center;
+  padding: 120px 48px 60px;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path .7s cubic-bezier(0.76, 0, 0.24, 1);
+  pointer-events: none;
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+}
+.services-overlay.open {
+  clip-path: inset(0 0 0% 0);
+  pointer-events: all;
+}
+.services-nav-list { list-style: none; }
+.services-nav-list li {
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.services-nav-list li:first-child { border-top: 1px solid rgba(255,255,255,.1); }
+.services-nav-list a {
+  display: block; padding: 22px 0;
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 400;
+  color: var(--cream);
+  text-decoration: none;
+  transition: color .3s, padding-left .3s;
+  cursor: none;
+}
+.services-nav-list a:hover { color: var(--red); padding-left: 24px; }
+.overlay-sub {
+  margin-left: auto;
+  color: rgba(255,255,255,.3);
+  font-size: .8rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  line-height: 2.2;
+  padding-top: 22px;
+  align-self: flex-start;
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 1 — HERO LOADER → HERO
+═══════════════════════════════════════════ */
+#hero {
+  height: 100vh; width: 100%;
+  display: flex; align-items: flex-end;
+  padding: 0 48px 60px;
+  position: relative; overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+}
+/* In light mode, keep the same dark bg — hero always reads as dark cinematic */
+
+/* Loader animation */
+.loader-wrap {
+  position: fixed; inset: 0;
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  z-index: 9998;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 24px;
+  animation: loaderAutoHide 0.5s ease 3.5s forwards;
+}
+@keyframes loaderAutoHide { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.loader-logo {
+  width: 100px; opacity: 0;
+  animation: loaderFade 1s ease .3s forwards;
+}
+.loader-bar {
+  width: 200px; height: 1px;
+  background: rgba(255,255,255,.15);
+  position: relative; overflow: hidden;
+}
+.loader-bar::after {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: var(--cream);
+  animation: loaderSweep 1.5s ease .5s forwards;
+}
+.loader-text {
+  color: rgba(255,255,255,.4);
+  font-size: .75rem; letter-spacing: .25em; text-transform: uppercase;
+  font-family: var(--sans);
+  opacity: 0;
+  animation: loaderFade .8s ease .4s forwards;
+}
+@keyframes loaderFade { to { opacity: 1; } }
+@keyframes loaderSweep { to { left: 100%; } }
+
+/* Hero content */
+.hero-bottom {
+  position: relative; z-index: 2;
+  width: 100%;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.hero-headline {
+  font-family: var(--serif);
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  color: #F0EBE3;
+  max-width: 680px;
+}
+.hero-headline em { font-style: italic; color: #D94050; }
+
+/* Language selector */
+.lang-select-wrap {
+  position: relative;
+  display: flex; align-items: center;
+}
+.lang-select {
+  appearance: none; -webkit-appearance: none;
+  background: transparent;
+  border: 1px solid var(--gray-light);
+  border-radius: 50px;
+  padding: 6px 28px 6px 14px;
+  font-family: var(--sans);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--gray);
+  cursor: none;
+  outline: none;
+  transition: border-color .25s, color .25s;
+}
+.lang-select:hover, .lang-select:focus { border-color: var(--red); color: var(--black); }
+.lang-select-arrow {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; font-size: .55rem; color: var(--gray);
+}
+body.dark-mode .lang-select { color: #B89098; border-color: #5A3040; background: transparent; }
+body.dark-mode .lang-select:hover { color: #FAF0F2; border-color: rgba(181,18,31,.5); }
+body.dark-mode .lang-select option { background: #1E0E12; color: #FAF0F2; }
+
+.hero-right {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 40px;
+  padding-bottom: 4px;
+}
+.hero-tagline {
+  font-size: .82rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  text-align: right;
+  max-width: 220px; line-height: 1.8;
+}
+.hero-pills {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end;
+}
+.hero-pill {
+  padding: 8px 18px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50px;
+  font-size: .75rem; letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(255,255,255,.45);
+  animation: fadeUpPill .6s ease both;
+}
+.hero-pill:nth-child(1) { animation-delay: 1.8s; }
+.hero-pill:nth-child(2) { animation-delay: 2s; }
+.hero-pill:nth-child(3) { animation-delay: 2.2s; }
+@keyframes fadeUpPill {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* scroll indicator */
+.scroll-hint {
+  position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 3;
+  opacity: 0; animation: fadeIn 1s ease 2.5s forwards;
+}
+.scroll-hint-line {
+  width: 1px; height: 50px;
+  background: rgba(255,255,255,.2);
+  position: relative; overflow: hidden;
+}
+.scroll-hint-line::after {
+  content: '';
+  position: absolute; top: -100%; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,.7);
+  animation: scrollPulse 1.5s ease-in-out infinite;
+}
+.scroll-hint span { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.4); }
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes scrollPulse {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 2 — HORIZONTAL SCROLL PANEL
+═══════════════════════════════════════════ */
+#horizontal-section {
+  position: relative;
+}
+.h-pin-wrapper {
+  position: sticky; top: 0;
+  height: 100vh; overflow: hidden;
+  display: flex;
+}
+.h-track {
+  display: flex;
+  will-change: transform;
+  transition: none;
+}
+.h-panel {
+  width: 100vw; height: 100vh;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+
+/* Panel 1 — quote */
+.h-panel-1 {
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  padding: 80px 48px;
+}
+.h-quote-text {
+  font-family: var(--serif);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 300;
+  color: #F0EBE3;
+  line-height: 1.1;
+  max-width: 900px;
+  text-align: center;
+}
+.h-quote-text em { font-style: italic; color: var(--red); }
+
+/* Panel 2 — image rotating */
+.h-panel-2 {
+  background: var(--cream-dark);
+  flex-direction: column; gap: 32px;
+}
+.h-rotating-img-wrap {
+  width: clamp(300px, 38vw, 520px);
+  height: clamp(300px, 38vw, 520px);
+  border-radius: 50%;
+  border: 1.5px solid rgba(181,18,31,.3);
+  box-shadow: 0 0 0 20px rgba(181,18,31,.05), 0 0 0 40px rgba(181,18,31,.02);
+  background: radial-gradient(circle at 50% 50%, rgba(181,18,31,.06) 0%, rgba(181,18,31,.01) 100%);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  will-change: transform;
+  position: relative;
+}
+.h-rotating-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.h-panel-2-label {
+  font-family: var(--serif); font-size: 1.1rem;
+  font-style: italic; color: var(--gray);
+  text-align: center;
+}
+
+/* Panel 3 — three features */
+.h-panel-3 {
+  background: var(--cream);
+  padding: 140px 48px 40px;
+  align-items: flex-start; justify-content: space-between;
+  overflow: hidden;
+}
+.h-features {
+  display: flex; gap: 40px; width: 100%;
+  align-items: flex-start;
+  height: 100%;
+}
+.h-feature { flex: 1; display: flex; flex-direction: column; }
+.h-feature-img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  max-height: 38vh;
+  border-radius: 10px;
+  background: var(--cream-dark);
+  border: 1px solid var(--gray-light);;
+  margin-bottom: 20px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+/* decorative lines inside placeholder */
+
+/* if user drops an actual img tag inside */
+.h-feature-img img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.h-feature-num {
+  font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gray-light); margin-bottom: 14px;
+}
+.h-feature-title {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+  font-weight: 400; line-height: 1.2;
+  margin-bottom: 12px;
+}
+.h-feature-desc { font-size: .88rem; color: var(--gray); line-height: 1.7; }
+
+/* ═══════════════════════════════════════════
+   SECTION 3 — ABOUT / MISSION
+═══════════════════════════════════════════ */
+#about {
+  background: var(--cream);
+  padding: 140px 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+.about-images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.about-img-placeholder {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--cream-dark);
+  border: 1px solid var(--gray-light);
+}
+.about-img-placeholder:first-child {
+  grid-column: span 2;
+  height: 260px;
+  background: linear-gradient(135deg, #d4c5bb 0%, #bfb0a6 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+.about-img-placeholder:last-child {
+  height: 200px;
+  background: linear-gradient(135deg, #c9bcb3 0%, #b5a89f 100%);
+  display: flex; align-items: center; justify-content: center;
+  grid-column: span 2;
+}
+.about-img-label {
+  font-size: .7rem; letter-spacing: .15em; text-transform: uppercase;
+  color: rgba(255,255,255,.6); font-family: var(--sans);
+}
+.about-content {}
+.about-eyebrow {
+  font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--red); margin-bottom: 24px;
+}
+.about-heading {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 3.5vw, 3.2rem);
+  font-weight: 400; line-height: 1.15;
+  margin-bottom: 32px;
+}
+.about-heading em { font-style: italic; }
+.about-body { font-size: .92rem; color: var(--gray); line-height: 1.8; margin-bottom: 28px; }
+.about-body-2 { font-size: .88rem; color: var(--gray); line-height: 1.8; font-style: italic; padding-left: 20px; border-left: 2px solid rgba(181,18,31,.3); }
+
+/* ═══════════════════════════════════════════
+   SECTION 4 — RELIABLE RESPONSIVE READY
+═══════════════════════════════════════════ */
+#rrr {
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  padding: 160px 48px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.rrr-inner { text-align: center; }
+.rrr-eyebrow {
+  font-size: .72rem; letter-spacing: .25em; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 40px;
+}
+.rrr-words {
+  display: flex; gap: 0;
+  justify-content: center; flex-wrap: wrap;
+}
+.rrr-word {
+  font-family: var(--serif);
+  font-size: clamp(3.5rem, 8vw, 8rem);
+  font-weight: 300; line-height: 1.0;
+  color: rgba(240,235,227,.25);
+  transition: color .4s ease;
+  padding: 0 20px;
+  cursor: default;
+}
+.rrr-word.active, .rrr-word:hover { color: var(--cream); }
+.rrr-word:nth-child(2) { font-style: italic; }
+
+/* ═══════════════════════════════════════════
+   SECTION 5 — TECHNOLOGY TEXT
+═══════════════════════════════════════════ */
+#tech {
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  padding: 180px 48px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.tech-headline {
+  font-family: var(--serif);
+  font-size: clamp(3rem, 7vw, 7rem);
+  font-weight: 300;
+  line-height: 1.05;
+  text-align: center;
+  max-width: 1100px;
+  color: #F0EBE3;
+}
+.tech-headline em { font-style: italic; color: var(--red-soft); }
+
+/* ═══════════════════════════════════════════
+   SECTION 6 — BLOOD TYPES SLIDER
+═══════════════════════════════════════════ */
+#blood-types {
+  background: #F5EFED;
+  padding: 120px 0;
+  overflow: hidden;
+}
+.blood-types-header {
+  padding: 0 48px 60px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.blood-types-heading {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 400; line-height: 1.2;
+}
+.blood-types-sub { font-size: .85rem; color: var(--gray); max-width: 260px; line-height: 1.7; text-align: right; }
+
+.blood-slider-track {
+  display: flex;
+  gap: 0;
+  cursor: grab;
+}
+.blood-slider-track:active { cursor: grabbing; }
+
+.blood-card {
+  min-width: 340px;
+  border-right: 1px solid rgba(181,18,31,.15);
+  padding: 48px 40px 60px;
+  display: flex; flex-direction: column;
+  position: relative;
+  transition: background .3s ease;
+  user-select: none;
+}
+.blood-card:first-child { border-left: 1px solid rgba(181,18,31,.15); }
+.blood-card:hover { background: rgba(181,18,31,.05); }
+.blood-card-num {
+  font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gray-light); margin-bottom: 40px;
+}
+.blood-card-type {
+  font-family: var(--serif);
+  font-size: 5rem; font-weight: 300;
+  line-height: 1; color: var(--black);
+  margin-bottom: 20px;
+}
+.blood-card-units {
+  font-size: .82rem; color: var(--gray);
+  letter-spacing: .06em; margin-bottom: auto;
+  padding-bottom: 40px;
+}
+.blood-card-units strong { color: var(--black); font-size: 1.4rem; font-family: var(--serif); }
+.blood-card-cta {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .78rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--black); border: none; background: none;
+  cursor: none; padding: 0;
+  font-family: var(--sans);
+  margin-top: 20px;
+}
+.blood-card-cta-arrow {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--black);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  transition: all .3s ease;
+}
+.blood-card:hover .blood-card-cta-arrow {
+  background: var(--black); color: var(--cream);
+  transform: rotate(45deg);
+}
+.blood-card-status {
+  position: absolute; top: 48px; right: 40px;
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.blood-card-status.available { background: #22c55e; }
+.blood-card-status.critical { background: var(--red); animation: blink 1.2s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ═══════════════════════════════════════════
+   SECTION 7 — TEAM / COORDINATORS
+═══════════════════════════════════════════ */
+#team {
+  background: var(--cream);
+  padding: 140px 48px;
+}
+.team-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 80px;
+  gap: 40px;
+}
+.team-heading-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.team-eyebrow {
+  font-size: .72rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gray); margin-bottom: 16px;
+}
+/* Team headline — typewriter animation */
+.team-headline-swap {
+  font-family: var(--serif);
+  font-size: clamp(1.3rem, 2.4vw, 2.4rem);
+  font-weight: 400; line-height: 1.3;
+  color: #1A0A0D;
+  white-space: nowrap;
+  overflow: visible;
+}
+body.dark-mode .team-headline-swap { color: #FAF0F2; }
+.team-prefix { display: inline; }
+.team-typed {
+  display: inline;
+  border-right: 2px solid #1A0A0D;
+  animation: caretBlink .7s step-end infinite;
+}
+body.dark-mode .team-typed { border-color: #FAF0F2; }
+@keyframes caretBlink { 0%,100%{border-color:transparent} 50%{border-color:currentColor} }
+
+/* keep .swap-line for JS compat but hidden */
+.swap-line { display: none; }
+
+.team-sub {
+  font-size: .9rem; color: var(--gray); line-height: 1.7;
+  max-width: 320px; text-align: right;
+}
+.meet-team-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: none; border: none; cursor: none;
+  font-family: var(--sans); font-size: .8rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--black); padding: 0;
+  margin-top: 16px;
+}
+.meet-team-btn .arrow-circle {
+  width: 40px; height: 40px;
+  border: 1.5px solid var(--black); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .3s ease;
+}
+.meet-team-btn:hover .arrow-circle {
+  background: var(--black); color: var(--cream);
+  transform: rotate(45deg);
+}
+
+/* Team modal */
+.team-modal {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 9000;
+  padding: 100px 48px 80px;
+  transform: translateY(100%);
+  transition: transform .7s cubic-bezier(0.76, 0, 0.24, 1);
+  overflow-y: auto;
+}
+.team-modal.open { transform: translateY(0); }
+.team-modal-close {
+  position: fixed; top: 28px; right: 48px;
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--black); border-radius: 50%;
+  background: none; cursor: none;
+  font-size: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .3s ease;
+}
+.team-modal-close:hover { background: var(--black); color: var(--cream); }
+.team-modal h2 {
+  font-family: var(--serif); font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 400; margin-bottom: 60px;
+}
+.team-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+}
+
+
+.team-member-img {
+  width: 100%;
+  height: 380px; /* or 300px if you want smaller */
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.team-member-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 🔥 KEY LINE */
+  display: block;
+}
+
+.team-member-name {
+  font-family: var(--serif); font-size: 1.8rem; font-weight: 400;
+  margin-top: 20px;
+}
+.team-member-role { font-size: .8rem; color: var(--gray); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+.team-member-bio { font-size: .88rem; color: var(--gray); line-height: 1.7; margin-top: 12px; }
+
+/* ═══════════════════════════════════════════
+   SECTION 8 — INVENTORY BUBBLES
+═══════════════════════════════════════════ */
+#inventory {
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  padding: 100px 48px 140px;
+  overflow: hidden;
+}
+.inventory-header {
+  text-align: center; margin-bottom: 70px;
+}
+.inventory-eyebrow {
+  font-size: .72rem; letter-spacing: .25em; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 16px;
+}
+.inventory-heading {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 300; color: var(--cream);
+}
+.inventory-note {
+  font-size: .8rem; color: rgba(255,255,255,.25);
+  margin-top: 10px; letter-spacing: .06em; font-style: italic;
+}
+
+/* Bubble scene */
+.bubble-scene {
+  position: relative;
+  width: 100%; height: 560px;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+
+/* The big arc curve at the bottom like in the reference */
+.bubble-arc {
+  position: absolute;
+  bottom: -20px; left: 50%; transform: translateX(-50%);
+  width: 120%; height: 420px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: none;
+  transition: transform .35s cubic-bezier(0.34,1.56,0.64,1), box-shadow .35s ease;
+  user-select: none;
+}
+.bubble:hover { transform: translateY(-10px) scale(1.04); }
+
+.bubble-num {
+  font-family: var(--serif);
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.bubble-label {
+  font-size: .6rem; letter-spacing: .2em;
+  text-transform: uppercase; text-align: center;
+  line-height: 1.4; opacity: .7;
+}
+
+/* Sizes and colors — warm blood-red toned palette */
+/* Center-large (O+) */
+.bubble-lg {
+  width: 220px; height: 220px;
+  background: #D4C4C6;
+  bottom: 20px;
+}
+.bubble-lg .bubble-num { font-size: 4.5rem; color: #3a1a1e; }
+.bubble-lg .bubble-label { color: #3a1a1e; }
+
+/* Second large (A+) */
+.bubble-lg2 {
+  width: 200px; height: 200px;
+  background: #C8B4B8;
+  bottom: 10px;
+}
+.bubble-lg2 .bubble-num { font-size: 4rem; color: #3a1a1e; }
+.bubble-lg2 .bubble-label { color: #3a1a1e; }
+
+/* Medium-dark (B+) */
+.bubble-md-dark {
+  width: 155px; height: 155px;
+  background: #6A3A42;
+  bottom: 180px;
+}
+.bubble-md-dark .bubble-num { font-size: 3rem; color: #f0d8db; }
+.bubble-md-dark .bubble-label { color: rgba(240,216,219,.7); }
+
+/* White / bright (AB+) */
+.bubble-white {
+  width: 165px; height: 165px;
+  background: #F0E8E9;
+  bottom: 220px;
+}
+.bubble-white .bubble-num { font-size: 3.2rem; color: #2a0a10; }
+.bubble-white .bubble-label { color: #7a4050; }
+
+/* Small left (O−) */
+.bubble-sm-left {
+  width: 115px; height: 115px;
+  background: #8A4A52;
+  bottom: 160px;
+}
+.bubble-sm-left .bubble-num { font-size: 2.2rem; color: #f0d8db; }
+.bubble-sm-left .bubble-label { color: rgba(240,216,219,.65); }
+
+/* Small right (A−) */
+.bubble-sm-right {
+  width: 130px; height: 130px;
+  background: #7A3A42;
+  bottom: 200px;
+}
+.bubble-sm-right .bubble-num { font-size: 2.4rem; color: #f0d8db; }
+.bubble-sm-right .bubble-label { color: rgba(240,216,219,.65); }
+
+/* B− tiny */
+.bubble-xs1 {
+  width: 90px; height: 90px;
+  background: #4A1A22;
+  bottom: 290px;
+}
+.bubble-xs1 .bubble-num { font-size: 1.7rem; color: #e8c8cc; }
+.bubble-xs1 .bubble-label { color: rgba(232,200,204,.55); }
+
+/* AB− tiny */
+.bubble-xs2 {
+  width: 100px; height: 100px;
+  background: #3E1018;
+  bottom: 260px;
+}
+.bubble-xs2 .bubble-num { font-size: 1.9rem; color: #e8c8cc; }
+.bubble-xs2 .bubble-label { color: rgba(232,200,204,.55); }
+
+.inventory-link {
+  text-align: center; margin-top: 48px;
+}
+.inventory-link a {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: .78rem; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.4); text-decoration: none;
+  transition: color .3s ease;
+}
+.inventory-link a:hover { color: var(--cream); }
+.inventory-link-arrow {
+  width: 36px; height: 36px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .3s ease;
+}
+.inventory-link a:hover .inventory-link-arrow {
+  border-color: var(--cream);
+  transform: rotate(45deg);
+}
+
+/* ═══════════════════════════════════════════
+   SECTION 9 — REVIEWS / TESTIMONIALS
+═══════════════════════════════════════════ */
+#reviews {
+  background: var(--cream);
+  padding: 140px 48px;
+  overflow: hidden;
+}
+.reviews-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 80px;
+}
+.reviews-heading {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 400;
+}
+.reviews-controls { display: flex; gap: 12px; }
+.review-btn {
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--black); border-radius: 50%;
+  background: none; cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: all .3s ease;
+}
+.review-btn:hover { background: var(--black); color: var(--cream); }
+
+.reviews-track-wrap { overflow: hidden; }
+.reviews-track {
+  display: flex; gap: 32px;
+  transition: transform .6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.review-card {
+  min-width: calc(50% - 16px);
+  background: var(--cream-dark);
+  border: 1px solid rgba(181,18,31,.12);
+  border-radius: 16px;
+  padding: 48px 40px;
+  flex-shrink: 0;
+}
+.review-quote {
+  font-family: var(--serif); font-size: 1.15rem;
+  font-weight: 300; line-height: 1.7;
+  color: var(--black); margin-bottom: 32px;
+}
+.review-quote::before { content: '\201C'; font-size: 2rem; color: var(--red); line-height: 0; vertical-align: -0.5em; margin-right: 4px; }
+.review-author {
+  display: flex; align-items: center; gap: 14px;
+}
+.review-avatar {
+  width: 44px; height: 44px;
+  background: rgba(181,18,31,.1); border-radius: 50%;
+  border: 1px solid rgba(181,18,31,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 1.1rem; color: var(--red);
+}
+.review-name { font-size: .88rem; font-weight: 500; }
+.review-meta { font-size: .75rem; color: var(--gray); letter-spacing: .05em; margin-top: 2px; }
+
+/* Drag hint */
+.drag-hint {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--gray); margin-top: 28px;
+}
+.drag-hint-line { flex: 1; height: 1px; background: rgba(181,18,31,.15); }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+footer {
+  background: linear-gradient(160deg, #1A0A0D 0%, #2d0810 100%);
+  padding: 80px 48px 48px;
+  color: var(--cream);
+}
+.footer-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding-bottom: 60px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.footer-brand {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.footer-logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.footer-logo img { width: 36px; filter: brightness(10); }
+.footer-logo-text {
+  font-family: var(--serif); font-size: 1.1rem; font-weight: 400;
+  color: #FAF0F2;
+}
+.footer-logo-text em { font-style: italic; color: var(--red); }
+.footer-tagline {
+  font-size: .82rem; color: rgba(255,255,255,.4);
+  max-width: 260px; line-height: 1.7;
+  font-style: italic; font-family: var(--serif);
+}
+.footer-links {
+  display: flex; gap: 80px;
+}
+.footer-col h4 {
+  font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+  color: rgba(255,255,255,.3); margin-bottom: 20px;
+}
+.footer-col a {
+  display: block; text-decoration: none;
+  font-family: var(--serif); font-size: 1rem;
+  color: rgba(255,255,255,.7);
+  margin-bottom: 10px; transition: color .2s;
+}
+.footer-col a:hover { color: var(--cream); }
+.footer-bottom {
+  padding-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.footer-copy {
+  font-size: .75rem; color: rgba(255,255,255,.3);
+  letter-spacing: .06em; font-family: var(--sans);
+}
+.footer-location {
+  font-size: .75rem; color: rgba(255,255,255,.3);
+  letter-spacing: .06em; font-family: var(--sans);
+}
+.footer-center-text {
+  font-family: var(--serif); font-size: .82rem;
+  font-style: italic; color: rgba(255,255,255,.35);
+  text-align: center;
+}
+.footer-project {
+  text-align: center;
+  font-size: .72rem; letter-spacing: .06em;
+  color: rgba(255,255,255,.35);
+  font-family: var(--sans);
+  padding: 20px 0 24px;
+}
+.footer-based {
+  font-size: .75rem; color: rgba(255,255,255,.3);
+  letter-spacing: .08em; text-transform: uppercase;
+  font-family: var(--sans); margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════
+   LOCATION MODAL
+═══════════════════════════════════════════ */
+.location-modal {
+  position: fixed; inset: 0;
+  background: var(--cream);
+  z-index: 9500;
+  transform: translateY(100%);
+  transition: transform .7s cubic-bezier(0.76, 0, 0.24, 1);
+  overflow-y: auto;
+  padding: 100px 48px 80px;
+}
+.location-modal.open { transform: translateY(0); }
+.location-modal-close {
+  position: fixed; top: 28px; right: 48px;
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--black); border-radius: 50%;
+  background: none; cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  transition: all .3s ease;
+}
+.location-modal-close:hover { background: var(--black); color: var(--cream); }
+.location-modal h2 {
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 400; line-height: 1.1;
+  margin-bottom: 12px;
+}
+.location-modal-sub {
+  font-size: .92rem; color: var(--gray); line-height: 1.7; margin-bottom: 60px;
+}
+.location-form { max-width: 600px; }
+.loc-field { margin-bottom: 32px; }
+.loc-label {
+  display: block; font-size: .7rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--gray); margin-bottom: 10px;
+}
+.loc-select, .loc-input {
+  width: 100%;
+  background: transparent;
+  border: none; border-bottom: 1.5px solid var(--gray-light);
+  padding: 12px 0;
+  font-family: var(--serif); font-size: 1.4rem;
+  color: var(--black); outline: none;
+  transition: border-color .3s;
+  -webkit-appearance: none;
+}
+.loc-select:focus, .loc-input:focus { border-color: var(--black); }
+.loc-select option { background: var(--cream); }
+.loc-submit {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 48px;
+  background: none; border: none;
+  font-family: var(--sans); font-size: .8rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--black); cursor: none;
+}
+.loc-submit-circle {
+  width: 52px; height: 52px;
+  border: 1.5px solid var(--black); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; transition: all .3s ease;
+}
+.loc-submit:hover .loc-submit-circle {
+  background: var(--black); color: var(--cream);
+  transform: rotate(45deg);
+}
+.loc-results { margin-top: 48px; }
+.loc-results h3 {
+  font-family: var(--serif); font-size: 1.5rem; margin-bottom: 24px;
+}
+.loc-bank-item {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--gray-light);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.loc-bank-name { font-family: var(--serif); font-size: 1.1rem; }
+.loc-bank-dist { font-size: .8rem; color: var(--gray); }
+
+/* ═══════════════════════════════════════════
+   DARK / LIGHT MODE
+═══════════════════════════════════════════ */
+body { transition: background .4s ease, color .4s ease; }
+
+/* DARK MODE overrides — light sections become dark */
+body.dark-mode {
+  --cream: #1E0E12;
+  --cream-dark: #280E14;
+  --gray: #B89098;
+  --gray-light: #5A3040;
+}
+
+/* Explicit text fixes in dark mode — never touch --black variable */
+body.dark-mode .hero-tagline { color: #B89098; }
+body.dark-mode .hero-pill { color: #B89098; border-color: #5A3040; }
+body.dark-mode nav.scrolled { background: rgba(30,14,18,.96) !important; }
+body.dark-mode .nav-logo-text { color: #FAF0F2; }
+body.dark-mode .nav-services-btn { color: #FAF0F2; }
+body.dark-mode .nav-services-btn .lines span { background: #FAF0F2; }
+body.dark-mode .nav-cta { color: #FAF0F2; }
+body.dark-mode .nav-cta-arrow { border-color: #FAF0F2; }
+
+body.dark-mode .h-panel-2 { background: #1E0E12; }
+body.dark-mode .h-panel-3 { background: #1E0E12; }
+body.dark-mode .h-panel-3 .h-feature-title { color: #FAF0F2; }
+body.dark-mode .h-panel-3 .h-feature-desc { color: #B89098; }
+body.dark-mode .h-feature-img { background: #2A1018 !important; border-color: rgba(181,18,31,.2) !important; }
+
+body.dark-mode #about { background: #1E0E12; }
+body.dark-mode .about-heading { color: #FAF0F2; }
+body.dark-mode .about-body { color: #B89098; }
+body.dark-mode .about-img-placeholder { background: #280E14 !important; border-color: rgba(181,18,31,.2); }
+
+body.dark-mode #our-goal { background: #280E14; }
+body.dark-mode .goal-prefix { color: #FAF0F2; }
+body.dark-mode .goal-text { color: #FAF0F2; }
+body.dark-mode .goal-word { color: rgba(250,180,190,.18); }
+body.dark-mode .goal-word.lit { color: #FAF0F2; }
+
+body.dark-mode #team { background: #1E0E12; }
+body.dark-mode .team-eyebrow { color: #B89098; }
+body.dark-mode .team-headline-swap { color: #FAF0F2; }
+body.dark-mode .team-sub { color: #B89098; }
+body.dark-mode .meet-team-btn { color: #FAF0F2; }
+body.dark-mode .meet-team-btn .arrow-circle { border-color: #FAF0F2; }
+body.dark-mode .team-modal { background: #1E0E12; }
+body.dark-mode .team-modal h2 { color: #FAF0F2; }
+body.dark-mode .team-member-img { background: #280E14 !important; }
+body.dark-mode .team-member-name { color: #FAF0F2; }
+body.dark-mode .team-member-role { color: #B89098; }
+body.dark-mode .team-member-bio { color: #B89098; }
+body.dark-mode .team-modal-close { border-color: #FAF0F2; color: #FAF0F2; }
+
+body.dark-mode #blood-types { background: #180A0E; }
+body.dark-mode .blood-types-heading { color: #FAF0F2; }
+body.dark-mode .blood-types-sub { color: #B89098; }
+body.dark-mode .blood-card { border-color: rgba(181,18,31,.2); }
+body.dark-mode .blood-card:hover { background: rgba(181,18,31,.08); }
+body.dark-mode .blood-card-type { color: #FAF0F2; }
+body.dark-mode .blood-card-units { color: #B89098; }
+body.dark-mode .blood-card-cta { color: #FAF0F2; }
+body.dark-mode .blood-card-cta-arrow { border-color: #FAF0F2; }
+
+body.dark-mode #reviews { background: #1E0E12; }
+body.dark-mode .reviews-heading { color: #FAF0F2; }
+body.dark-mode .review-card { background: #280E14; border-color: rgba(181,18,31,.15); }
+body.dark-mode .review-quote { color: #FAF0F2; }
+body.dark-mode .review-name { color: #FAF0F2; }
+body.dark-mode .review-meta { color: #B89098; }
+body.dark-mode .review-btn { border-color: rgba(181,18,31,.4); color: #FAF0F2; }
+
+body.dark-mode .location-modal { background: #1E0E12; }
+body.dark-mode .location-modal h2 { color: #FAF0F2; }
+body.dark-mode .location-modal-sub { color: #B89098; }
+body.dark-mode .loc-label { color: #B89098; }
+body.dark-mode .loc-select,
+body.dark-mode .loc-input { color: #FAF0F2; border-color: rgba(181,18,31,.3); }
+body.dark-mode .loc-select option { background: #1E0E12; }
+body.dark-mode .loc-submit { color: #FAF0F2; }
+body.dark-mode .loc-submit-circle { border-color: #FAF0F2; }
+body.dark-mode .loc-bank-name { color: #FAF0F2; }
+body.dark-mode .loc-bank-item { border-color: rgba(181,18,31,.2); }
+
+/* RRR words — hardcoded so they never flip with --cream */
+.rrr-word.active, .rrr-word:hover { color: #FAF7F4 !important; }
+
+/* Goal words — hardcoded */
+.goal-word { color: rgba(195,160,165,.35); transition: color .3s ease; }
+.goal-word.lit { color: #1A0A0D; }
+body.dark-mode .goal-word { color: rgba(250,180,190,.18); }
+body.dark-mode .goal-word.lit { color: #FAF0F2; }
+
+
+/* Theme toggle — refined CSS icon */
+.theme-toggle {
+  position: fixed; bottom: 32px; right: 32px;
+  z-index: 9000;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(181,18,31,.2);
+  background: rgba(250,247,244,.9);
+  backdrop-filter: blur(8px);
+  cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 16px rgba(181,18,31,.1);
+  transition: border-color .3s ease, background .4s ease, transform .3s ease;
+}
+.theme-toggle:hover {
+  border-color: var(--red);
+  transform: scale(1.08);
+}
+/* The icon inside */
+.theme-toggle-icon {
+  width: 18px; height: 18px;
+  position: relative;
+  transition: transform .5s ease;
+}
+/* Sun: full circle */
+.theme-toggle-icon .tog-sun {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid #1A0A0D;
+  position: absolute; top: 0; left: 0;
+  transition: all .4s ease;
+}
+/* Sun rays */
+.theme-toggle-icon .tog-sun::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 26px; height: 26px;
+  margin: -13px;
+  border-radius: 50%;
+  box-shadow:
+    0 -10px 0 -7px #1A0A0D,
+    0  10px 0 -7px #1A0A0D,
+    -10px 0 0 -7px #1A0A0D,
+     10px 0 0 -7px #1A0A0D,
+    -7px -7px 0 -7px #1A0A0D,
+     7px -7px 0 -7px #1A0A0D,
+    -7px  7px 0 -7px #1A0A0D,
+     7px  7px 0 -7px #1A0A0D;
+  transition: all .4s ease;
+}
+/* Moon overlay: hides part of sun circle */
+.theme-toggle-icon .tog-moon {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(250,247,244,.9);
+  position: absolute; top: -3px; left: 5px;
+  transform: scale(0);
+  transition: transform .4s ease, background .4s ease;
+}
+
+/* Dark mode state — show moon, hide sun rays */
+body.dark-mode .theme-toggle {
+  background: rgba(26,10,13,.9);
+  border-color: rgba(181,18,31,.3);
+}
+body.dark-mode .theme-toggle-icon .tog-sun {
+  border-color: #FAF0F2;
+}
+body.dark-mode .theme-toggle-icon .tog-sun::before {
+  box-shadow: none; /* no rays in dark/moon mode */
+  opacity: 0;
+}
+body.dark-mode .theme-toggle-icon .tog-moon {
+  background: rgba(26,10,13,.9);
+  transform: scale(1);
+}
+body.dark-mode .theme-toggle-icon { transform: rotate(25deg); }
+
+
+#our-goal {
+  background: var(--cream-dark);
+  padding: 160px 48px;
+  overflow: hidden;
+}
+.goal-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 60px;
+}
+.goal-prefix {
+  font-family: var(--serif);
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 300;
+  color: var(--black);
+  line-height: 1.1;
+  flex-shrink: 0;
+  padding-top: 8px;
+}
+.goal-text-wrap {
+  flex: 1;
+}
+.goal-text {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5vw, 5.2rem);
+  font-weight: 300;
+  line-height: 1.15;
+  color: var(--black);
+}
+/* Each word starts dim, scrolls to full opacity */
+.goal-word {
+  display: inline;
+  color: rgba(195,160,165,.35);
+  transition: color .4s ease;
+}
+.goal-word.lit { color: #1A0A0D; }
+
+
+.reveal-word { overflow: hidden; display: inline-block; }
+.reveal-word-inner { display: inline-block; transform: translateY(110%); }
+
+.reveal-up { opacity: 0; transform: translateY(40px); }
+
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- LOADER -->
+<div class="loader-wrap" id="loader">
+  <img src="assets/logow.png" alt="Bloodline" class="loader-logo">
+  <div class="loader-bar"></div>
+  <div class="loader-text">Loading</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ NAV ═══ -->
+<nav id="mainNav">
+  <a href="#" class="nav-logo">
+    <img src="assets/logo.png" alt="Bloodline Logo">
+    <div class="nav-logo-text">Online <em>Blood Bank</em><br>Management</div>
+  </a>
+
+  <div class="nav-right">
+    <div class="lang-select-wrap">
+      <select class="lang-select" id="langSelect" title="Select Language">
+        <option value="en">EN</option>
+        <option value="hi">हिं</option>
+        <option value="te">తె</option>
+        <option value="ta">த</option>
+        <option value="kn">ಕ</option>
+        <option value="ml">മ</option>
+        <option value="mr">म</option>
+      </select>
+      <span class="lang-select-arrow">▾</span>
+    </div>
+    <button class="nav-services-btn" id="servicesBtn" aria-label="Menu">
+      <div class="lines">
+        <span></span><span></span><span></span>
+      </div>
+      <span>Menu</span>
+    </button>
+
+    <a href="registration.php" class="nav-cta" id="donorCta">
+      Register
+      <div class="nav-cta-arrow">↗</div>
+    </a>
+
+    <button class="nav-cta" id="locationBtn">
+      Set Location
+      <div class="nav-cta-arrow">↗</div>
+    </button>
+  </div>
+</nav>
+
+<!-- SERVICES OVERLAY -->
+<div class="services-overlay" id="servicesOverlay">
+  <ul class="services-nav-list">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="make-request.html">Make Request</a></li>
+    <li><a href="inventory.html">Inventory</a></li>
+    <li><a href="registration.php">Register</a></li>
+    <li><a href="login.html">Login</a></li>
+  </ul>
+  <div class="overlay-sub">
+    Online Blood Bank<br>
+    Management System<br>
+    Based in India<br>
+    SDG 3
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ HERO ═══ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+
+  <div class="hero-bottom">
+    <h1 class="hero-headline">
+      Online<br><em>Blood Bank</em><br>Management System
+    </h1>
+    <div class="hero-right">
+      <div class="hero-tagline">
+        Real-time blood access<br>across India
+      </div>
+      <div class="hero-pills">
+        <div class="hero-pill">Instant Blood Access</div>
+        <div class="hero-pill">Life-Saving Connectivity</div>
+        <div class="hero-pill">Rapid Emergency Response</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-hint-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ HORIZONTAL ═══ -->
+<div id="horizontal-section">
+  <div class="h-pin-wrapper" id="hPinWrapper">
+    <div class="h-track" id="hTrack">
+
+      <!-- Panel 1: Quote -->
+      <div class="h-panel h-panel-1">
+        <p class="h-quote-text">
+          Give blood.<br>Give someone<br><em>another day.</em>
+        </p>
+      </div>
+
+      <!-- Panel 2: Rotating image -->
+      <div class="h-panel h-panel-2">
+        <div class="h-rotating-img-wrap" id="rotatingWrap">
+          <img src="assets/hero-img.png" alt="Blood Donation" class="h-rotating-img" id="rotatingImg">
+        </div>
+        <p class="h-panel-2-label">Every donation saves up to 3 lives</p>
+      </div>
+
+      <!-- Panel 3: Three features -->
+      <div class="h-panel h-panel-3">
+        <div class="h-features">
+          <div class="h-feature">
+            <div class="h-feature-img">
+              <img src="assets/img8.jpg" alt="">
+            </div>
+            <div class="h-feature-num">01</div>
+            <h3 class="h-feature-title">Instant Blood Access</h3>
+            <p class="h-feature-desc">Real-time availability tracking across all registered blood banks in your region.</p>
+          </div>
+          <div class="h-feature">
+            <div class="h-feature-img">
+              <img src="assets/img6.jpg" alt=""> 
+            </div>
+            <div class="h-feature-num">02</div>
+            <h3 class="h-feature-title">Life-Saving Connectivity</h3>
+            <p class="h-feature-desc">Seamless connection between donors, hospitals, and emergency responders.</p>
+          </div>
+          <div class="h-feature">
+            <div class="h-feature-img">
+              <img src="assets/img7.png" alt="">
+            </div>
+            <div class="h-feature-num">03</div>
+            <h3 class="h-feature-title">Rapid Emergency Response</h3>
+            <p class="h-feature-desc">Priority alerts and instant dispatching for critical blood requirements.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Scroll spacer for GSAP pin -->
+  <div id="hSpacer"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ ABOUT ═══ -->
+<section id="about">
+  <div class="about-images reveal-up">
+    <div class="about-img-placeholder">
+      <img src="assets/feature1.jpg" alt="" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;opacity:.85;">
+    </div>
+    <div class="about-img-placeholder">
+  <img src="assets/feature2.jpg" alt="Donor network" style="width:100%;height:100%;object-fit:cover;">
+</div>
+  </div>
+  <div class="about-content">
+    <div class="about-eyebrow reveal-up">Our Platform</div>
+    <h2 class="about-heading reveal-up">
+      With a centralized system<br>and <em>real-time tracking</em>
+    </h2>
+    <p class="about-body reveal-up">
+      Our platform ensures efficient blood management, reliable availability, and a consistent commitment to timely care across all registered facilities in India.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ OUR GOAL ═══ -->
+<section id="our-goal">
+  <div class="goal-inner">
+    <div class="goal-prefix">Our<br>goal is</div>
+    <div class="goal-text-wrap">
+      <div class="goal-text" id="goalText"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ RRR ═══ -->
+<section id="rrr">
+  <div class="rrr-inner">
+    <div class="rrr-eyebrow">Our Promise</div>
+    <div class="rrr-words">
+      <div class="rrr-word active" id="w1">Reliable</div>
+      <div class="rrr-word" id="w2" style="color:rgba(240,235,227,.2);font-style:italic;">&</div>
+      <div class="rrr-word" id="w3">Responsive</div>
+      <div class="rrr-word" id="w4" style="color:rgba(250,230,232,.08);">&</div>
+      <div class="rrr-word" id="w5">Ready</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ TECH ═══ -->
+<section id="tech">
+  <h2 class="tech-headline">
+    Technology-Driven<br>
+    Blood Systems <em>for</em><br>
+    Timely Care
+  </h2>
+</section>
+
+<!-- ═══════════════════════════════════════════ BLOOD TYPES ═══ -->
+<section id="blood-types">
+  <div class="blood-types-header">
+    <div>
+      <div class="about-eyebrow">Live Inventory</div>
+      <h2 class="blood-types-heading">Blood availability,<br>updated in real time.</h2>
+    </div>
+    <p class="blood-types-sub">Drag to browse all blood types and current stock levels.</p>
+  </div>
+
+  <div class="blood-slider-track" id="bloodSlider">
+    <!-- Cards generated by JS -->
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ TEAM ═══ -->
+<section id="team">
+  <div class="team-header">
+    <div class="team-heading-wrap">
+      <div class="team-eyebrow">Our coordinators</div>
+      <div class="team-headline-swap" id="teamSwap">
+        <span class="team-prefix">We are dedicated to providing </span><span class="team-typed" id="teamTyped"></span>
+      </div>
+      <button class="meet-team-btn" id="meetTeamBtn">
+        Meet the team
+        <div class="arrow-circle">↗</div>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:16px;">
+      <p class="team-sub">
+        Coordinated efforts connecting donors and needs when it matters most.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM MODAL -->
+<div class="team-modal" id="teamModal">
+  <button class="team-modal-close" id="teamModalClose">✕</button>
+  <h2>Meet the Team</h2>
+  <div class="team-grid">
+    <div>
+      <div class="team-member-img"><img src="assets/risha2.png" alt="Risha Kanthe"></div>
+      <div class="team-member-name">Risha Kanthe</div>
+      <div class="team-member-role">Developer</div>
+      <div class="team-member-bio">Problem Statement, UI/UX Design, Database Design, Frontend Development, Content Integration, Translations</div>
+    </div>
+    <div>
+      <div class="team-member-img"><img src="assets/sk.png" alt="Soham Kanase"></div>
+      <div class="team-member-name">Soham Kanase</div>
+      <div class="team-member-role">Developer</div>
+      <div class="team-member-bio">Manages critical blood request dispatch and coordinates with hospitals across the network for urgent cases.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ INVENTORY ═══ -->
+<section id="inventory">
+  <div class="inventory-header">
+    <div class="inventory-eyebrow">Current Stock</div>
+    <h2 class="inventory-heading">Available units, updated in real time.</h2>
+    <p class="inventory-note">1 unit = 0.45 L</p>
+  </div>
+
+  <div class="bubble-scene">
+    <div class="bubble-arc"></div>
+    <div class="bubble bubble-lg" style="left:calc(50% - 260px);">
+      <div class="bubble-num">15</div>
+      <div class="bubble-label">O+<br>units</div>
+    </div>
+    <div class="bubble bubble-lg2" style="left:calc(50% + 60px);">
+      <div class="bubble-num">12</div>
+      <div class="bubble-label">A+<br>units</div>
+    </div>
+    <div class="bubble bubble-md-dark" style="left:calc(50% - 380px);">
+      <div class="bubble-num">8</div>
+      <div class="bubble-label">B+<br>units</div>
+    </div>
+    <div class="bubble bubble-white" style="left:calc(50% - 80px);">
+      <div class="bubble-num">5</div>
+      <div class="bubble-label">AB+<br>units</div>
+    </div>
+    <div class="bubble bubble-sm-left" style="left:calc(50% - 500px);">
+      <div class="bubble-num">3</div>
+      <div class="bubble-label">O−<br>units</div>
+    </div>
+    <div class="bubble bubble-sm-right" style="left:calc(50% + 295px);">
+      <div class="bubble-num">6</div>
+      <div class="bubble-label">A−<br>units</div>
+    </div>
+    <div class="bubble bubble-xs1" style="left:calc(50% + 435px);">
+      <div class="bubble-num">2</div>
+      <div class="bubble-label">B−<br>units</div>
+    </div>
+    <div class="bubble bubble-xs2" style="left:calc(50% - 620px);">
+      <div class="bubble-num">1</div>
+      <div class="bubble-label">AB−<br>units</div>
+    </div>
+  </div>
+
+  <div class="inventory-link">
+    <a href="inventory.html">
+      <div class="inventory-link-arrow">↗</div>
+      View Full Inventory
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ REVIEWS ═══ -->
+<section id="reviews">
+  <div class="reviews-header">
+    <h2 class="reviews-heading">What people<br>are saying</h2>
+    <div class="reviews-controls">
+      <button class="review-btn" id="revPrev">←</button>
+      <button class="review-btn" id="revNext">→</button>
+    </div>
+  </div>
+
+  <div class="reviews-track-wrap">
+    <div class="reviews-track" id="reviewsTrack">
+      <div class="review-card">
+        <p class="review-quote">The system helped us find O− blood within 20 minutes during a critical surgery. This platform is truly life-saving.</p>
+        <div class="review-author">
+          <div class="review-avatar">D</div>
+          <div>
+            <div class="review-name">Dr. Meera Pillai</div>
+            <div class="review-meta">Apollo Hospital, Mumbai</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <p class="review-quote">Registration was seamless. I got notified within hours when my blood type was needed nearby.</p>
+        <div class="review-author">
+          <div class="review-avatar">R</div>
+          <div>
+            <div class="review-name">Rahul Sharma</div>
+            <div class="review-meta">Regular Donor, Pune</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <p class="review-quote">Real-time tracking of blood inventory changed how our blood bank operates. We've reduced shortages by 60%.</p>
+        <div class="review-author">
+          <div class="review-avatar">P</div>
+          <div>
+            <div class="review-name">Priya Nair</div>
+            <div class="review-meta">Blood Bank Manager, Chennai</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <p class="review-quote">I was able to locate the nearest blood bank in my pincode and donate the same evening. Incredibly efficient.</p>
+        <div class="review-author">
+          <div class="review-avatar">A</div>
+          <div>
+            <div class="review-name">Aryan Mehta</div>
+            <div class="review-meta">First-time Donor, Delhi</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="drag-hint">
+    <div class="drag-hint-line"></div>
+    <span>Drag to explore</span>
+    <div class="drag-hint-line"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ FOOTER ═══ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <img src="assets/logow.png" alt="logo">
+        <div class="footer-logo-text">Online <em>Blood Bank</em> Management System</div> 
+      </div>
+      <p class="footer-tagline">Improving access to blood through technology.</p>
+      <p class="footer-based">Based in India</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <a href="make-request.html">Make Request</a>
+        <a href="inventory.html">Inventory</a>
+        <a href="registration.php">Register</a>
+        <a href="login.html">Login</a>
+      </div>
+      <div class="footer-col">
+        <h4>Info</h4>
+        <a href="#">About</a>
+        <a href="#">Emergency</a>
+        <a href="#">SDG 3</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project credit line above divider -->
+  <div class="footer-project">Online Blood Bank Management System | RDBMS &amp; Web Programming Mini Project</div>
+
+  <div class="footer-bottom">
+    <div class="footer-copy">Risha Kanthe · 16010124129</div>
+    <div class="footer-center-text">SDG 3: Good Health and Well-Being</div>
+    <div class="footer-location">Soham Kanase · 16010124128</div>
+  </div>
+</footer>
+
+<!-- LOCATION MODAL -->
+<div class="location-modal" id="locationModal">
+  <button class="location-modal-close" id="locationModalClose">✕</button>
+
+  <h2>Find Blood Banks<br><em>Near You</em></h2>
+  <p class="location-modal-sub">Select your location to find nearby blood banks.</p>
+
+  <div class="location-form">
+    <div class="loc-field">
+      <label class="loc-label">State</label>
+      <select class="loc-select" id="stateSelect">
+        <option value="">Select State</option>
+      </select>
+    </div>
+    <div class="loc-field">
+      <label class="loc-label">City</label>
+      <select class="loc-select" id="citySelect" disabled>
+        <option value="">Select State First</option>
+      </select>
+    </div>
+    <div class="loc-field">
+      <label class="loc-label">Pincode</label>
+      <input type="text" class="loc-input" id="pincodeInput" placeholder="Enter pincode" maxlength="6">
+    </div>
+    <button class="loc-submit" id="locSubmitBtn">
+      <div class="loc-submit-circle">→</div>
+      Select Location
+    </button>
+
+    <div class="loc-results" id="locResults" style="display:none;">
+      <h3>Nearby Blood Banks</h3>
+      <div id="bankList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">
+  <div class="theme-toggle-icon">
+    <div class="tog-sun"></div>
+    <div class="tog-moon"></div>
+  </div>
+</button>
+
+<!-- ═══════════════════════════════════════════ SCRIPTS ═══ -->
+<!-- GSAP -->
+<script src="gsap.min.js"></script>
+<script src="ScrollTrigger.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const BLOOD_TYPES = [
+  { type: 'O+',  units: 15, status: 'available' },
+  { type: 'A+',  units: 12, status: 'available' },
+  { type: 'B+',  units: 8,  status: 'available' },
+  { type: 'AB+', units: 5,  status: 'available' },
+  { type: 'O−',  units: 3,  status: 'critical'  },
+  { type: 'A−',  units: 6,  status: 'available' },
+  { type: 'B−',  units: 2,  status: 'critical'  },
+  { type: 'AB−', units: 1,  status: 'critical'  },
+];
+
+const INDIA_STATES = {
+  "Andhra Pradesh":   ["Visakhapatnam","Vijayawada","Guntur","Nellore","Kurnool"],
+  "Arunachal Pradesh":["Itanagar","Tawang","Ziro"],
+  "Assam":            ["Guwahati","Silchar","Dibrugarh","Jorhat"],
+  "Bihar":            ["Patna","Gaya","Bhagalpur","Muzaffarpur"],
+  "Chhattisgarh":     ["Raipur","Bhilai","Bilaspur","Korba"],
+  "Goa":              ["Panaji","Margao","Vasco da Gama"],
+  "Gujarat":          ["Ahmedabad","Surat","Vadodara","Rajkot","Gandhinagar"],
+  "Haryana":          ["Gurugram","Faridabad","Panipat","Ambala"],
+  "Himachal Pradesh": ["Shimla","Manali","Dharamshala"],
+  "Jharkhand":        ["Ranchi","Jamshedpur","Dhanbad"],
+  "Karnataka":        ["Bengaluru","Mysuru","Hubli","Mangaluru"],
+  "Kerala":           ["Thiruvananthapuram","Kochi","Kozhikode","Thrissur"],
+  "Madhya Pradesh":   ["Bhopal","Indore","Gwalior","Jabalpur"],
+  "Maharashtra":      ["Mumbai","Pune","Nagpur","Nashik","Thane","Aurangabad"],
+  "Manipur":          ["Imphal","Thoubal"],
+  "Meghalaya":        ["Shillong","Tura"],
+  "Mizoram":          ["Aizawl","Lunglei"],
+  "Nagaland":         ["Kohima","Dimapur"],
+  "Odisha":           ["Bhubaneswar","Cuttack","Rourkela"],
+  "Punjab":           ["Chandigarh","Ludhiana","Amritsar","Jalandhar"],
+  "Rajasthan":        ["Jaipur","Jodhpur","Udaipur","Kota","Bikaner"],
+  "Sikkim":           ["Gangtok","Namchi"],
+  "Tamil Nadu":       ["Chennai","Coimbatore","Madurai","Tiruchirappalli","Salem"],
+  "Telangana":        ["Hyderabad","Warangal","Nizamabad","Karimnagar"],
+  "Tripura":          ["Agartala","Udaipur"],
+  "Uttar Pradesh":    ["Lucknow","Kanpur","Agra","Varanasi","Prayagraj","Noida","Ghaziabad"],
+  "Uttarakhand":      ["Dehradun","Haridwar","Nainital","Rishikesh"],
+  "West Bengal":      ["Kolkata","Howrah","Durgapur","Asansol","Siliguri"],
+  "Delhi":            ["New Delhi","Dwarka","Rohini","Lajpat Nagar"],
+  "Jammu & Kashmir":  ["Jammu","Srinagar","Leh"],
+};
+
+/* ═══════════════════════════════════════════
+   CURSOR
+═══════════════════════════════════════════ */
+const dot = document.getElementById('cursorDot');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function animateCursor() {
+  dot.style.left = mx + 'px'; dot.style.top = my + 'px';
+  rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+  ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+/* ── CURSOR COLOUR based on background ── */
+const darkSections  = ['#hero', '#services-overlay'];
+const lightSections = ['#about', '#our-goal', '#stats-section', 
+                       '#team', '#contact', '.h-panel-2', '.h-panel-3'];
+
+function updateCursorTheme() {
+  const el = document.elementFromPoint(mx, my);
+  if (!el) return;
+  let node = el;
+  let onLight = false;
+  while (node && node !== document.body) {
+    const bg = window.getComputedStyle(node).backgroundColor;
+    const match = bg.match(/[\d.]+/g);
+    if (match && match.length >= 4) {
+      const alpha = parseFloat(match[3]);
+      if (alpha < 0.05) { node = node.parentElement; continue; } // skip transparent
+      const [r, g, b] = match.map(Number);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      if (brightness > 128) { onLight = true; break; }
+      if (brightness < 80)  { onLight = false; break; }
+    } else if (match && match.length === 3) {
+      // rgb() with no alpha — fully opaque
+      const [r, g, b] = match.map(Number);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      if (brightness > 128) { onLight = true; break; }
+      if (brightness < 80)  { onLight = false; break; }
+    }
+    node = node.parentElement;
+  }
+  dot.classList.toggle('on-light', onLight);
+  ring.classList.toggle('on-light', onLight);
+}
+
+document.addEventListener('mousemove', updateCursorTheme);
+
+document.querySelectorAll('a,button,.blood-card,.review-card').forEach(el => {
+  el.addEventListener('mouseenter', () => { dot.classList.add('hover'); ring.classList.add('hover'); });
+  el.addEventListener('mouseleave', () => { dot.classList.remove('hover'); ring.classList.remove('hover'); });
+});
+
+/* ═══════════════════════════════════════════
+   LOADER
+═══════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const loader = document.getElementById('loader');
+    loader.style.transition = 'opacity .6s ease, visibility .6s ease';
+    loader.style.opacity = '0';
+    loader.style.visibility = 'hidden';
+    // Hero text entrance
+    gsap.from('.hero-headline', { y: 60, opacity: 0, duration: 1.2, ease: 'power3.out', delay: .1 });
+    gsap.from('.hero-right', { y: 40, opacity: 0, duration: 1, ease: 'power3.out', delay: .4 });
+  }, 2000);
+});
+
+/* ═══════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════ */
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* Services overlay */
+const servicesBtn = document.getElementById('servicesBtn');
+const overlay = document.getElementById('servicesOverlay');
+servicesBtn.addEventListener('click', () => {
+  const isOpen = overlay.classList.toggle('open');
+  servicesBtn.classList.toggle('open', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+  // Invert nav colors when overlay is open
+  nav.style.setProperty('color', isOpen ? 'var(--cream)' : '');
+});
+
+/* ═══════════════════════════════════════════
+   GSAP — REGISTER (for basic animations only)
+═══════════════════════════════════════════ */
+try { gsap.registerPlugin(ScrollTrigger); } catch(e) {}
+
+/* ═══════════════════════════════════════════
+   HORIZONTAL SCROLL
+   Pure scroll event — works on file://
+═══════════════════════════════════════════ */
+(function() {
+  const section   = document.getElementById('horizontal-section');
+  const pinWrap   = section.querySelector('.h-pin-wrapper');
+  const track     = document.getElementById('hTrack');
+  const spacer    = document.getElementById('hSpacer');
+  const panels    = track.querySelectorAll('.h-panel');
+  const N         = panels.length;
+
+  // Give spacer the scroll distance needed
+  spacer.style.height = (N - 1) * 100 + 'vh';
+
+  function onScroll() {
+    const rect = section.getBoundingClientRect();
+    const sectionTop = section.offsetTop;
+    const scrollY    = window.scrollY || window.pageYOffset;
+
+    // How far into the section have we scrolled?
+    const raw     = scrollY - sectionTop;
+    const maxScroll = (N - 1) * window.innerHeight;
+    const progress = Math.max(0, Math.min(1, raw / maxScroll));
+
+    // Shift the track
+    track.style.transform = `translateX(-${progress * (N - 1) * 100}vw)`;
+
+    // Rotate the image wrapper on panel 2
+    const rotWrap = document.getElementById('rotatingWrap');
+    if (rotWrap) {
+      rotWrap.style.transform = `rotate(${progress * 360}deg)`;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll(); // init position
+})();
+
+/* ═══════════════════════════════════════════
+   REVEAL ON SCROLL — IntersectionObserver
+═══════════════════════════════════════════ */
+(function() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.style.opacity = '1';
+        el.target.style.transform = 'translateY(0)';
+        obs.unobserve(el.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal-up').forEach(el => {
+    el.style.transition = 'opacity 1s ease, transform 1s ease';
+    obs.observe(el);
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   RRR WORDS — IntersectionObserver
+═══════════════════════════════════════════ */
+(function() {
+  const rrrSection = document.getElementById('rrr');
+  if (!rrrSection) return;
+  const ids = ['w1','w2','w3','w4','w5'];
+  let fired = false;
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !fired) {
+        fired = true;
+        ids.forEach((id, i) => {
+          setTimeout(() => {
+            document.getElementById(id)?.classList.add('active');
+          }, i * 200);
+        });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.05 });
+
+  obs.observe(rrrSection);
+})();
+
+/* ═══════════════════════════════════════════
+   TECH HEADLINE — IntersectionObserver
+═══════════════════════════════════════════ */
+(function() {
+  const tech = document.getElementById('tech');
+  if (!tech) return;
+  let fired = false;
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !fired) {
+      fired = true;
+      try { gsap.from('.tech-headline', { y: 60, opacity: 0, duration: 1.2, ease: 'power3.out' }); }
+      catch(e) {}
+      obs.disconnect();
+    }
+  }, { threshold: 0.3 });
+  obs.observe(tech);
+})();
+
+/* ═══════════════════════════════════════════
+   REVEAL ON SCROLL — basic elements
+═══════════════════════════════════════════ */
+try {
+  gsap.utils.toArray('.reveal-up').forEach(el => {
+    gsap.fromTo(el,
+      { y: 50, opacity: 0 },
+      { y: 0, opacity: 1, duration: 1, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 85%' } }
+    );
+  });
+} catch(e) {}
+
+/* ═══════════════════════════════════════════
+   INVENTORY BUBBLES — IntersectionObserver
+═══════════════════════════════════════════ */
+(function() {
+  const inv = document.getElementById('inventory');
+  if (!inv) return;
+  let fired = false;
+  const obs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !fired) {
+      fired = true;
+      try {
+        gsap.from('.bubble', { scale: 0, opacity: 0, duration: .9, stagger: .12, ease: 'back.out(1.5)' });
+      } catch(e) {
+        document.querySelectorAll('.bubble').forEach(b => { b.style.opacity = '1'; b.style.transform = 'scale(1)'; });
+      }
+      obs.disconnect();
+    }
+  }, { threshold: 0.2 });
+  obs.observe(inv);
+})();
+
+/* ═══════════════════════════════════════════
+   TEAM TYPEWRITER
+═══════════════════════════════════════════ */
+(function() {
+  const el = document.getElementById('teamTyped');
+  if (!el) return;
+  const words = ['fast access', 'live tracking', 'quick response'];
+  let wi = 0, ci = 0, deleting = false;
+  const TYPE_SPEED = 75, DELETE_SPEED = 40, PAUSE = 2000, PAUSE_EMPTY = 400;
+
+  function tick() {
+    const word = words[wi];
+    if (!deleting) {
+      el.textContent = word.slice(0, ++ci);
+      if (ci === word.length) { deleting = true; setTimeout(tick, PAUSE); return; }
+    } else {
+      el.textContent = word.slice(0, --ci);
+      if (ci === 0) {
+        deleting = false;
+        wi = (wi + 1) % words.length;
+        setTimeout(tick, PAUSE_EMPTY); return;
+      }
+    }
+    setTimeout(tick, deleting ? DELETE_SPEED : TYPE_SPEED);
+  }
+  setTimeout(tick, 800);
+})();
+
+/* ═══════════════════════════════════════════
+   TEAM MODAL
+═══════════════════════════════════════════ */
+const teamModal = document.getElementById('teamModal');
+document.getElementById('meetTeamBtn').addEventListener('click', () => {
+  teamModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+});
+document.getElementById('teamModalClose').addEventListener('click', () => {
+  teamModal.classList.remove('open');
+  document.body.style.overflow = '';
+});
+
+/* ═══════════════════════════════════════════
+   BLOOD TYPES SLIDER (drag)
+═══════════════════════════════════════════ */
+const slider = document.getElementById('bloodSlider');
+
+// Generate cards
+BLOOD_TYPES.forEach((bt, i) => {
+  const card = document.createElement('div');
+  card.className = 'blood-card';
+  card.innerHTML = `
+    <div class="blood-card-num">${String(i+1).padStart(2,'0')} / 08</div>
+    <div class="blood-card-status ${bt.status}"></div>
+    <div class="blood-card-type">${bt.type}</div>
+    <div class="blood-card-units"><strong>${bt.units}</strong> units available</div>
+    <button class="blood-card-cta">
+      Make Request
+      <div class="blood-card-cta-arrow">↗</div>
+    </button>
+  `;
+  card.querySelector('.blood-card-cta').addEventListener('click', () => {
+    alert(`Request for ${bt.type} blood submitted. We'll confirm shortly.`);
+  });
+  slider.appendChild(card);
+});
+
+// Drag scroll
+let isDown = false, startX, scrollLeft;
+slider.addEventListener('mousedown', e => {
+  isDown = true; slider.classList.add('active');
+  startX = e.pageX - slider.offsetLeft;
+  scrollLeft = slider.scrollLeft;
+});
+slider.addEventListener('mouseleave', () => { isDown = false; });
+slider.addEventListener('mouseup', () => { isDown = false; });
+slider.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  e.preventDefault();
+  const x = e.pageX - slider.offsetLeft;
+  const walk = (x - startX) * 1.5;
+  slider.scrollLeft = scrollLeft - walk;
+});
+slider.style.overflowX = 'auto';
+slider.style.scrollbarWidth = 'none';
+slider.style.msOverflowStyle = 'none';
+
+/* ═══════════════════════════════════════════
+   OUR GOAL — word reveal via scroll position
+   Pure scroll event, works on file://
+═══════════════════════════════════════════ */
+(function buildGoalText() {
+  const sentence = "to make blood access dependable and accessible through organized management, continuous coordination, and a system that ensures no patient is left waiting in urgent situations.";
+  const container = document.getElementById('goalText');
+  if (!container) return;
+
+  const words = sentence.split(' ');
+  container.innerHTML = words.map(w =>
+    `<span class="goal-word">${w} </span>`
+  ).join('');
+
+  const wordEls = container.querySelectorAll('.goal-word');
+  const total = wordEls.length;
+
+  function updateGoalWords() {
+    const section = document.getElementById('our-goal');
+    if (!section) return;
+    const rect = section.getBoundingClientRect();
+    const vh = window.innerHeight;
+
+    // Progress: 0 when section top hits bottom of viewport, 1 when section bottom hits top
+    const progress = Math.max(0, Math.min(1,
+      (vh - rect.top) / (rect.height + vh)
+    ));
+
+    const litCount = Math.floor(progress * total * 1.2);
+    wordEls.forEach((w, i) => {
+      w.classList.toggle('lit', i < litCount);
+    });
+  }
+
+  window.addEventListener('scroll', updateGoalWords, { passive: true });
+  updateGoalWords();
+})();
+
+
+/* ═══════════════════════════════════════════
+   REVIEWS CAROUSEL
+═══════════════════════════════════════════ */
+const reviewTrack = document.getElementById('reviewsTrack');
+const cards = reviewTrack.querySelectorAll('.review-card');
+let revIdx = 0;
+const cardW = () => cards[0].offsetWidth + 32; // gap
+
+function moveReview(dir) {
+  revIdx = Math.max(0, Math.min(cards.length - 2, revIdx + dir));
+  reviewTrack.style.transform = `translateX(-${revIdx * cardW()}px)`;
+}
+
+document.getElementById('revPrev').addEventListener('click', () => moveReview(-1));
+document.getElementById('revNext').addEventListener('click', () => moveReview(1));
+
+// Touch / drag on reviews
+let revDown = false, revStartX, revScrollLeft2 = 0;
+const revWrap = reviewTrack.parentElement;
+revWrap.addEventListener('mousedown', e => { revDown = true; revStartX = e.pageX; });
+revWrap.addEventListener('mouseup', e => {
+  if (!revDown) return; revDown = false;
+  const dx = e.pageX - revStartX;
+  if (Math.abs(dx) > 50) moveReview(dx < 0 ? 1 : -1);
+});
+
+/* ═══════════════════════════════════════════
+   LOCATION MODAL
+═══════════════════════════════════════════ */
+const locationModal = document.getElementById('locationModal');
+document.getElementById('locationBtn').addEventListener('click', () => {
+  locationModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+});
+document.getElementById('locationModalClose').addEventListener('click', () => {
+  locationModal.classList.remove('open');
+  document.body.style.overflow = '';
+});
+
+// Populate states
+const stateSelect = document.getElementById('stateSelect');
+const citySelect = document.getElementById('citySelect');
+Object.keys(INDIA_STATES).sort().forEach(state => {
+  const opt = document.createElement('option');
+  opt.value = state; opt.textContent = state;
+  stateSelect.appendChild(opt);
+});
+
+stateSelect.addEventListener('change', () => {
+  citySelect.innerHTML = '<option value="">Select City</option>';
+  citySelect.disabled = !stateSelect.value;
+  if (stateSelect.value) {
+    INDIA_STATES[stateSelect.value].forEach(city => {
+      const opt = document.createElement('option');
+      opt.value = city; opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
+  }
+});
+
+// Mock blood banks
+const MOCK_BANKS = [
+  { name: "City Blood Centre", dist: 1.2 },
+  { name: "Red Cross Blood Bank", dist: 2.8 },
+  { name: "District Hospital Blood Bank", dist: 4.1 },
+  { name: "Apollo Blood Bank", dist: 5.6 },
+  { name: "Fortis Life Line", dist: 7.3 },
+];
+
+document.getElementById('locSubmitBtn').addEventListener('click', () => {
+  const state = stateSelect.value;
+  const city = citySelect.value;
+  const pin = document.getElementById('pincodeInput').value;
+  if (!state || !city) { alert('Please select State and City'); return; }
+
+  const results = document.getElementById('locResults');
+  const bankList = document.getElementById('bankList');
+  results.style.display = 'block';
+  bankList.innerHTML = '';
+
+  MOCK_BANKS.sort((a, b) => a.dist - b.dist).forEach(b => {
+    const item = document.createElement('div');
+    item.className = 'loc-bank-item';
+    item.innerHTML = `
+      <div>
+        <div class="loc-bank-name">${b.name}</div>
+        <div class="loc-bank-dist">${city}, ${state}${pin ? ' — ' + pin : ''}</div>
+      </div>
+      <div class="loc-bank-dist">${b.dist} km away</div>
+    `;
+    bankList.appendChild(item);
+  });
+
+  try { gsap.from('.loc-bank-item', { y: 20, opacity: 0, stagger: .1, duration: .6, ease: 'power2.out' }); } catch(e) {}
+});
+
+/* ═══════════════════════════════════════════
+   LANGUAGE SWITCHER
+═══════════════════════════════════════════ */
+(function() {
+  // All translatable strings keyed by element ID or selector
+  const TRANSLATIONS = {
+    en: {
+      heroLine1: 'Give blood.',
+      heroLine2: 'Give someone',
+      heroLine3: 'another day.',
+      pill1: 'Instant Blood Access',
+      pill2: 'Life-Saving Connectivity',
+      pill3: 'Rapid Emergency Response',
+      tagline: 'Real-time blood access across India',
+      navRegister: 'Register',
+      navLocation: 'Set Location',
+      feat1: 'Instant Blood Access',
+      feat2: 'Life-Saving Connectivity',
+      feat3: 'Rapid Emergency Response',
+    },
+    hi: {
+      heroLine1: 'रक्त दान करें.',
+      heroLine2: 'किसी को दें',
+      heroLine3: 'एक और दिन.',
+      pill1: 'त्वरित रक्त पहुंच',
+      pill2: 'जीवन-रक्षक कनेक्टिविटी',
+      pill3: 'त्वरित आपातकालीन प्रतिक्रिया',
+      tagline: 'भारत भर में रियल-टाइम रक्त पहुंच',
+      navRegister: 'दाता पंजीकरण',
+      navLocation: 'स्थान चुनें',
+      feat1: 'त्वरित रक्त पहुंच',
+      feat2: 'जीवन-रक्षक कनेक्टिविटी',
+      feat3: 'त्वरित आपातकालीन प्रतिक्रिया',
+    },
+    te: {
+      heroLine1: 'రక్తం ఇవ్వండి.',
+      heroLine2: 'ఒకరికి ఇవ్వండి',
+      heroLine3: 'మరో రోజు.',
+      pill1: 'తక్షణ రక్త అందుబాటు',
+      pill2: 'జీవన రక్షణ కనెక్టివిటీ',
+      pill3: 'వేగవంతమైన అత్యవసర స్పందన',
+      tagline: 'భారతదేశంలో రియల్-టైమ్ రక్త అందుబాటు',
+      navRegister: 'దాత నమోదు',
+      navLocation: 'స్థానం సెట్ చేయండి',
+      feat1: 'తక్షణ రక్త అందుబాటు',
+      feat2: 'జీవన రక్షణ కనెక్టివిటీ',
+      feat3: 'వేగవంతమైన అత్యవసర స్పందన',
+    },
+    ta: {
+      heroLine1: 'இரத்தம் தானம் செய்யுங்கள்.',
+      heroLine2: 'யாரோ ஒருவருக்கு கொடுங்கள்',
+      heroLine3: 'இன்னொரு நாள்.',
+      pill1: 'உடனடி இரத்த அணுகல்',
+      pill2: 'உயிர்காக்கும் இணைப்பு',
+      pill3: 'விரைவான அவசர மறுமொழி',
+      tagline: 'இந்தியா முழுவதும் நேரடி இரத்த அணுகல்',
+      navRegister: 'நன்கொடையாளர் பதிவு',
+      navLocation: 'இடத்தை அமை',
+      feat1: 'உடனடி இரத்த அணுகல்',
+      feat2: 'உயிர்காக்கும் இணைப்பு',
+      feat3: 'விரைவான அவசர மறுமொழி',
+    },
+    kn: {
+      heroLine1: 'ರಕ್ತ ನೀಡಿ.',
+      heroLine2: 'ಯಾರಿಗಾದರೂ ನೀಡಿ',
+      heroLine3: 'ಇನ್ನೊಂದು ದಿನ.',
+      pill1: 'ತ್ವರಿತ ರಕ್ತ ಪ್ರವೇಶ',
+      pill2: 'ಜೀವ ರಕ್ಷಕ ಸಂಪರ್ಕ',
+      pill3: 'ವೇಗದ ತುರ್ತು ಪ್ರತಿಕ್ರಿಯೆ',
+      tagline: 'ಭಾರತಾದ್ಯಂತ ರಿಯಲ್-ಟೈಮ್ ರಕ್ತ ಪ್ರವೇಶ',
+      navRegister: 'ದಾನಿ ನೋಂದಣಿ',
+      navLocation: 'ಸ್ಥಳ ಆಯ್ಕೆ',
+      feat1: 'ತ್ವರಿತ ರಕ್ತ ಪ್ರವೇಶ',
+      feat2: 'ಜೀವ ರಕ್ಷಕ ಸಂಪರ್ಕ',
+      feat3: 'ವೇಗದ ತುರ್ತು ಪ್ರತಿಕ್ರಿಯೆ',
+    },
+    ml: {
+      heroLine1: 'രക്തം ദാനം ചെയ്യൂ.',
+      heroLine2: 'ആർക്കെങ്കിലും നൽകൂ',
+      heroLine3: 'ഒരു ദിവസം കൂടി.',
+      pill1: 'തൽക്ഷണ രക്ത ലഭ്യത',
+      pill2: 'ജീവൻ രക്ഷിക്കുന്ന കണക്റ്റിവിറ്റി',
+      pill3: 'അടിയന്തര പ്രതികരണം',
+      tagline: 'ഇന്ത്യയിലുടനീളം തൽക്ഷണ രക്ത ലഭ്യത',
+      navRegister: 'ദാതാ രജിസ്ട്രേഷൻ',
+      navLocation: 'സ്ഥലം തിരഞ്ഞെടുക്കൂ',
+      feat1: 'തൽക്ഷണ രക്ത ലഭ്യത',
+      feat2: 'ജീവൻ രക്ഷിക്കുന്ന കണക്റ്റിവിറ്റി',
+      feat3: 'അടിയന്തര പ്രതികരണം',
+    },
+    mr: {
+      heroLine1: 'रक्त द्या.',
+      heroLine2: 'कोणाला द्या',
+      heroLine3: 'आणखी एक दिवस.',
+      pill1: 'त्वरित रक्त उपलब्धता',
+      pill2: 'जीव वाचवणारी कनेक्टिव्हिटी',
+      pill3: 'जलद आपत्कालीन प्रतिसाद',
+      tagline: 'भारतभर रिअल-टाइम रक्त उपलब्धता',
+      navRegister: 'देणगीदार नोंदणी',
+      navLocation: 'स्थान निवडा',
+      feat1: 'त्वरित रक्त उपलब्धता',
+      feat2: 'जीव वाचवणारी कनेक्टिव्हिटी',
+      feat3: 'जलद आपत्कालीन प्रतिसाद',
+    },
+  };
+
+  const langSelect = document.getElementById('langSelect');
+  if (!langSelect) return;
+
+  // Cache DOM refs
+  const heroH = document.querySelector('.hero-headline');
+  const pills = document.querySelectorAll('.hero-pill');
+  const tagline = document.querySelector('.hero-tagline');
+  const donorCta = document.getElementById('donorCta');
+  const locationBtn = document.getElementById('locationBtn');
+  const featTitles = document.querySelectorAll('.h-feature-title');
+
+  function applyLang(code) {
+    const t = TRANSLATIONS[code] || TRANSLATIONS.en;
+    if (heroH) {
+      heroH.innerHTML = `${t.heroLine1}<br>${t.heroLine2}<br><em>${t.heroLine3}</em>`;
+    }
+    if (pills[0]) pills[0].textContent = t.pill1;
+    if (pills[1]) pills[1].textContent = t.pill2;
+    if (pills[2]) pills[2].textContent = t.pill3;
+    if (tagline) tagline.innerHTML = t.tagline;
+    if (donorCta) donorCta.innerHTML = `${t.navRegister}<div class="nav-cta-arrow">↗</div>`;
+    if (locationBtn) locationBtn.innerHTML = `${t.navLocation}<div class="nav-cta-arrow">↗</div>`;
+    if (featTitles[0]) featTitles[0].textContent = t.feat1;
+    if (featTitles[1]) featTitles[1].textContent = t.feat2;
+    if (featTitles[2]) featTitles[2].textContent = t.feat3;
+  }
+
+  langSelect.addEventListener('change', () => applyLang(langSelect.value));
+  // cursor hover
+  langSelect.addEventListener('mouseenter', () => { dot.classList.add('hover'); ring.classList.add('hover'); });
+  langSelect.addEventListener('mouseleave', () => { dot.classList.remove('hover'); ring.classList.remove('hover'); });
+})();
+
+/* ═══════════════════════════════════════════
+   DARK / LIGHT MODE TOGGLE
+═══════════════════════════════════════════ */
+const themeBtn = document.getElementById('themeToggle');
+let isDark = false;
+
+themeBtn.addEventListener('click', () => {
+  isDark = !isDark;
+  document.body.classList.toggle('dark-mode', isDark);
+  dot.classList.add('hover'); ring.classList.add('hover');
+  setTimeout(() => { dot.classList.remove('hover'); ring.classList.remove('hover'); }, 400);
+});
+themeBtn.addEventListener('mouseenter', () => { dot.classList.add('hover'); ring.classList.add('hover'); });
+themeBtn.addEventListener('mouseleave', () => { dot.classList.remove('hover'); ring.classList.remove('hover'); });
+</script>
+</body>
+</html>
