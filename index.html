@@ -1625,13 +1625,13 @@ body.dark-mode .theme-toggle-icon { transform: rotate(25deg); }
       <div class="team-member-img"><img src="assets/risha2.png" alt="Risha Kanthe"></div>
       <div class="team-member-name">Risha Kanthe</div>
       <div class="team-member-role">Developer</div>
-      <div class="team-member-bio">Problem Statement, UI/UX Design, Database Design, Frontend Development, Content Integration, Translations</div>
+      <div class="team-member-bio">Problem Statement, UI/UX Design, Frontend Development, Content Integration, Translations</div>
     </div>
     <div>
       <div class="team-member-img"><img src="assets/sk.png" alt="Soham Kanase"></div>
       <div class="team-member-name">Soham Kanase</div>
       <div class="team-member-role">Developer</div>
-      <div class="team-member-bio">Manages critical blood request dispatch and coordinates with hospitals across the network for urgent cases.</div>
+      <div class="team-member-bio">Engineered the PHP backend, MySQL schema, and live inventory system, connecting all frontend interactions to a fully functional database layer.</div>
     </div>
   </div>
 </div>
@@ -2208,28 +2208,28 @@ async function buildBloodCards() {
     });
     slider.appendChild(card);
   });
+
+  // Drag scroll — must be here since slider is defined in this scope
+  let isDown = false, startX, scrollLeft;
+  slider.addEventListener('mousedown', e => {
+    isDown = true; slider.classList.add('active');
+    startX = e.pageX - slider.offsetLeft;
+    scrollLeft = slider.scrollLeft;
+  });
+  slider.addEventListener('mouseleave', () => { isDown = false; });
+  slider.addEventListener('mouseup',    () => { isDown = false; });
+  slider.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - slider.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    slider.scrollLeft = scrollLeft - walk;
+  });
+  slider.style.overflowX      = 'auto';
+  slider.style.scrollbarWidth = 'none';
+  slider.style.msOverflowStyle = 'none';
 }
 buildBloodCards();
-
-// Drag scroll
-let isDown = false, startX, scrollLeft;
-slider.addEventListener('mousedown', e => {
-  isDown = true; slider.classList.add('active');
-  startX = e.pageX - slider.offsetLeft;
-  scrollLeft = slider.scrollLeft;
-});
-slider.addEventListener('mouseleave', () => { isDown = false; });
-slider.addEventListener('mouseup', () => { isDown = false; });
-slider.addEventListener('mousemove', e => {
-  if (!isDown) return;
-  e.preventDefault();
-  const x = e.pageX - slider.offsetLeft;
-  const walk = (x - startX) * 1.5;
-  slider.scrollLeft = scrollLeft - walk;
-});
-slider.style.overflowX = 'auto';
-slider.style.scrollbarWidth = 'none';
-slider.style.msOverflowStyle = 'none';
 
 /* ═══════════════════════════════════════════
    OUR GOAL — word reveal via scroll position
