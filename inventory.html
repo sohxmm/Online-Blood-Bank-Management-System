@@ -329,6 +329,35 @@ bubbles.forEach((b, i) => {
     if(logo) logo.src=dark?"assets/logo-dark.png":"assets/logo-light.png";
   });
 })();
+
+async function loadInventory() {
+  try {
+    const res  = await fetch('get_inventory.php');
+    const data = await res.json();
+    data.inventory.forEach(item => {
+      const bg = item.bloodGroup.replace('-','−');
+      const bubble = document.querySelector(`.bubble[data-type="${bg}"]`);
+      if(bubble){
+        bubble.querySelector('.bubble-val').textContent = item.units;
+        bubble.setAttribute('data-units', item.units);
+        const badge = bubble.querySelector('.bubble-critical-badge');
+        if(item.critical && !badge){
+          const b = document.createElement('div');
+          b.className='bubble-critical-badge';
+          bubble.appendChild(b);
+        } else if(!item.critical && badge){ badge.remove(); }
+      }
+    });
+    const vals = document.querySelectorAll('.stat-val');
+    if(vals[0]) vals[0].textContent = data.totalUnits;
+    if(vals[1]) vals[1].textContent = data.bloodTypes;
+    if(vals[2]) vals[2].textContent = data.criticalTypes;
+    if(vals[3]) vals[3].textContent = data.pendingRequests;
+  } catch(e){ console.warn('Inventory load failed:',e); }
+}
+loadInventory();
+setInterval(loadInventory, 60000);
+
 </script>
 </body>
 </html>

@@ -342,13 +342,37 @@ document.getElementById('rfoClose').addEventListener('click',()=>{
   overlay.classList.remove('open');
   document.body.style.overflow='';
 });
-document.getElementById('rfoSubmitBtn').addEventListener('click',()=>{
-  const name=document.getElementById('rfName').value;
-  const phone=document.getElementById('rfPhone').value;
+document.getElementById('rfoSubmitBtn').addEventListener('click', async () => {
+  const name    = document.getElementById('rfName').value.trim();
+  const phone   = document.getElementById('rfPhone').value.trim();
+  const hosp    = document.getElementById('rfHospital').value.trim();
+  const units   = document.getElementById('rfUnits').value;
+  const urgency = document.getElementById('rfUrgency').value;
+  const patient = document.getElementById('rfPatient').value.trim();
+  const type    = document.getElementById('rfoType').textContent;
   if(!name||!phone){alert('Please fill in at least your name and phone number.');return;}
-  document.getElementById('rfoSubmitBtn').style.display='none';
-  document.getElementById('rfoSuccess').style.display='block';
-  gsap.from('#rfoSuccess .rfo-success-msg',{y:30,opacity:0,duration:.8,ease:'power3.out'});
+  document.getElementById('rfoSubmitBtn').disabled = true;
+  try {
+    const res = await fetch('submit_request.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name,phone,hospital:hosp,units:parseInt(units)||1,urgency,patient,bloodType:type})
+    });
+    const json = await res.json();
+    if(json.success){
+      document.getElementById('rfoSubmitBtn').style.display='none';
+      document.getElementById('rfoSuccess').style.display='block';
+      document.querySelector('.rfo-success-msg').innerHTML =
+        `Request submitted.<br>We'll connect you shortly.<br><small style="font-size:.8rem;opacity:.5;">Ref #${json.requestID}</small>`;
+      gsap.from('#rfoSuccess .rfo-success-msg',{y:30,opacity:0,duration:.8,ease:'power3.out'});
+    } else {
+      alert('Error: '+json.message);
+      document.getElementById('rfoSubmitBtn').disabled=false;
+    }
+  } catch(err){
+    alert('Network error. Please try again.');
+    document.getElementById('rfoSubmitBtn').disabled=false;
+  }
 });
 </script>
 <button class="theme-toggle" id="themeToggle2" title="Toggle dark/light mode">
