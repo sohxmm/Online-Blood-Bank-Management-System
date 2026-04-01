@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -15,13 +17,13 @@ $email   = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
 $message = clean($_POST['message']  ?? '');
 
 $errors = [];
-if (strlen($name) < 3)                              $errors[] = 'Name must be at least 3 characters.';
-if (!filter_var($email, FILTER_VALIDATE_EMAIL))     $errors[] = 'Invalid email address.';
-if (strlen($message) < 10)                          $errors[] = 'Message must be at least 10 characters.';
+if (strlen($name) < 3)                          $errors[] = 'Name must be at least 3 characters.';
+if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email address.';
+if (strlen($message) < 10)                      $errors[] = 'Message must be at least 10 characters.';
 
 if (!empty($errors)) {
-    $msg = urlencode(implode(' | ', $errors));
-    header("Location: contact.php?error=$msg");
+    $_SESSION['flash_error'] = implode(' | ', $errors);
+    header("Location: contact.php");
     exit;
 }
 
@@ -32,8 +34,11 @@ $stmt = $db->prepare(
 $stmt->bind_param('sss', $name, $email, $message);
 
 if ($stmt->execute()) {
-    header('Location: contact.php?success=1');
+    $_SESSION['flash_success'] = 'Message sent successfully.';
+    header('Location: contact.php');
 } else {
-    header('Location: contact.php?error=' . urlencode('Could not send message. Please try again.'));
+    $_SESSION['flash_error'] = 'Could not send message. Please try again.';
+    header('Location: contact.php');
 }
+
 $stmt->close();

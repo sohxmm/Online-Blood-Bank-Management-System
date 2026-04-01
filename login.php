@@ -1,11 +1,14 @@
 <?php
-// login.php — Bloodline Donor Login
 session_start();
-// If already logged in, go straight to dashboard
+
 if (isset($_SESSION['donor_id'])) {
     header('Location: dashboard.php');
     exit;
 }
+
+$error = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_error']);
+?>
 $error = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error']), ENT_QUOTES, 'UTF-8') : '';
 ?>
 <!DOCTYPE html>

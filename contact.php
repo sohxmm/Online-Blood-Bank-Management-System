@@ -1,7 +1,13 @@
 <?php
-// contact.php — Bloodline Contact Page
-$success = isset($_GET['success']) && $_GET['success'] === '1';
-$error   = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error']), ENT_QUOTES, 'UTF-8') : '';
+session_start();
+
+$success = $_SESSION['flash_success'] ?? '';
+$error   = $_SESSION['flash_error'] ?? '';
+
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+
+$loggedIn  = isset($_SESSION['donor_id']);
+$donorName = $_SESSION['donor_name'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
