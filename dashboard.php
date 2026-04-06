@@ -64,6 +64,22 @@ function fmt(?string $date): string {
 $fullName  = trim($donor['FName'] . ' ' . ($donor['MName'] ? $donor['MName'] . ' ' : '') . $donor['LName']);
 $donorType = $regular ? 'Regular Donor' : 'First-Time Donor';
 $totalDons = $regular ? $regular['TotalDonations'] : 0;
+$rememberedLogin = !empty($_SESSION['remembered_login']);
+$pageLabels = [
+    'index.html' => 'Home',
+    'inventory.html' => 'Inventory',
+    'make-request.html' => 'Make Request',
+    'contact.php' => 'Contact',
+    'registration.php' => 'Registration',
+    'login.php' => 'Login',
+];
+$lastVisitedKey = basename((string) ($_COOKIE[LAST_PAGE_COOKIE] ?? ''));
+$lastVisitedLabel = $pageLabels[$lastVisitedKey] ?? '';
+$rememberedMessage = $rememberedLogin
+    ? 'Welcome back. We remembered this device'
+        . ($lastVisitedLabel !== '' ? ' after your last visit to ' . $lastVisitedLabel : '')
+        . '.'
+    : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,6 +127,7 @@ body.dark-mode nav{background:rgba(30,14,18,.97);}
 .dash-hero-right{text-align:right;}
 .donor-type-badge{display:inline-flex;align-items:center;gap:8px;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gray);border:1px solid var(--gray-light);padding:6px 16px;border-radius:100px;}
 .donor-type-badge span{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;}
+.remembered-note{margin-top:14px;max-width:320px;font-size:.82rem;line-height:1.7;color:var(--gray);}
 
 /* BODY */
 .dash-body{max-width:1100px;margin:0 auto;padding:72px 48px 120px;}
@@ -196,6 +213,9 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
       <span></span>
       <?= htmlspecialchars($donorType) ?>
     </div>
+    <?php if ($rememberedMessage !== ''): ?>
+      <p class="remembered-note"><?= htmlspecialchars($rememberedMessage, ENT_QUOTES, 'UTF-8') ?></p>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -323,6 +343,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </button>
 
 <script src="gsap.min.js"></script>
+<script src="assets/site-prefs.js"></script>
 <script>
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
 let mx=0,my=0,rx=0,ry=0;
@@ -332,15 +353,8 @@ document.querySelectorAll('a,button').forEach(e=>{
   e.addEventListener('mouseenter',()=>{cDot.classList.add('hov');cRing.classList.add('hov');});
   e.addEventListener('mouseleave',()=>{cDot.classList.remove('hov');cRing.classList.remove('hov');});
 });
-
-const tBtn=document.getElementById('themeToggle');
-const pageLogo=document.getElementById('pageLogo');
-let dark=false;
-tBtn.addEventListener('click',()=>{
-  dark=!dark;
-  document.body.classList.toggle('dark-mode',dark);
-  if(pageLogo) pageLogo.src=dark?'assets/logo-dark.png':'assets/logo-light.png';
-});
+BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle', logoId:'pageLogo' });
+BloodlinePrefs.trackLastVisitedPage('dashboard.php');
 
 try{
   if(typeof gsap!=='undefined'){

@@ -4,7 +4,10 @@
 // Returns JSON: { "success": true/false, "message": "..." }
 
 header('Content-Type: application/json; charset=utf-8');
+require_once 'auth.php';
 require_once 'db.php';
+
+boot_session();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
@@ -19,6 +22,8 @@ if (!$data) {
     // Fallback: try $_POST (if sent as form-encoded)
     $data = $_POST;
 }
+
+require_csrf_token($data['csrf_token'] ?? null, 'make-request.html', true);
 
 function jclean(mixed $v): string {
     return htmlspecialchars(strip_tags(trim((string)$v)), ENT_QUOTES, 'UTF-8');

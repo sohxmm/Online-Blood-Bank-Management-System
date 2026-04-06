@@ -289,6 +289,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </footer>
 
 <script src="gsap.min.js"></script>
+<script src="assets/site-prefs.js"></script>
 <script>
 /* Cursor */
 const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
@@ -330,6 +331,16 @@ BLOOD_TYPES.forEach((bt,i)=>{
 gsap.from('.blood-grid-card', {y:40,opacity:0,duration:.8,stagger:.08,ease:'power3.out',delay:.2,scrollTrigger:{trigger:'.blood-grid',start:'top 80%'}});
 
 /* Request overlay */
+let requestCsrfToken = '';
+async function ensureCsrfToken(){
+  if(requestCsrfToken) return requestCsrfToken;
+  const res = await fetch('csrf_token.php', { credentials:'same-origin' });
+  const json = await res.json();
+  requestCsrfToken = json.csrfToken || '';
+  return requestCsrfToken;
+}
+ensureCsrfToken().catch(()=>{});
+
 const overlay = document.getElementById('requestOverlay');
 function openRequest(type){
   document.getElementById('rfoType').textContent = type;
@@ -353,10 +364,12 @@ document.getElementById('rfoSubmitBtn').addEventListener('click', async () => {
   if(!name||!phone){alert('Please fill in at least your name and phone number.');return;}
   document.getElementById('rfoSubmitBtn').disabled = true;
   try {
+    const csrfToken = await ensureCsrfToken();
     const res = await fetch('submit_request.php', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({name,phone,hospital:hosp,units:parseInt(units)||1,urgency,patient,bloodType:type})
+      credentials:'same-origin',
+      body: JSON.stringify({name,phone,hospital:hosp,units:parseInt(units)||1,urgency,patient,bloodType:type,csrf_token:csrfToken})
     });
     const json = await res.json();
     if(json.success){
@@ -382,16 +395,8 @@ document.getElementById('rfoSubmitBtn').addEventListener('click', async () => {
   </div>
 </button>
 <script>
-(function(){
-  var btn=document.getElementById("themeToggle2");
-  var logo=document.getElementById("pageLogo");
-  var dark=false;
-  btn.addEventListener("click",function(){
-    dark=!dark;
-    document.body.classList.toggle("dark-mode",dark);
-    if(logo) logo.src=dark?"assets/logo-dark.png":"assets/logo-light.png";
-  });
-})();
+BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle2', logoId:'pageLogo' });
+BloodlinePrefs.trackLastVisitedPage('make-request.html');
 </script>
 </body>
 </html>

@@ -190,6 +190,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <div class="reg-body">
 <form id="donorForm" method="POST" action="register.php" novalidate>
+<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
 
 <?php if ($success): ?>
 <div style="
@@ -429,6 +430,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </button>
 
 <script src="gsap.min.js"></script>
+<script src="assets/site-prefs.js"></script>
 <script>
 /* ── CURSOR ── */
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
@@ -439,11 +441,8 @@ function addHover(els){els.forEach(e=>{e.addEventListener('mouseenter',()=>{cDot
 addHover(document.querySelectorAll('a,button,input,select,textarea,.yn-label,.check-item,.consent-check'));
 
 /* ── THEME ── */
-const tBtn=document.getElementById('themeToggle');
-let dark=false;
-if(dark){document.body.classList.add('dark-mode');tBtn.textContent='🌙';}
-const regLogo=document.getElementById('pageLogo');
-tBtn.addEventListener('click',()=>{dark=!dark;document.body.classList.toggle('dark-mode',dark);if(regLogo)regLogo.src=dark?'assets/logo-dark.png':'assets/logo-light.png';});
+BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle', logoId:'pageLogo' });
+BloodlinePrefs.trackLastVisitedPage('registration.php');
 
 /* ── YES/NO TABLE BUILDER ── */
 const YN_QUESTIONS = [

@@ -10,7 +10,6 @@ if (is_logged_in()) {
 
 $error = pull_flash('flash_error');
 $success = pull_flash('flash_success');
-$rememberedEmail = htmlspecialchars(get_remembered_email(), ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -151,8 +150,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
   <div class="field">
     <label>Email Address *</label>
-    <input type="email" id="email" name="email" placeholder="you@example.com" required
-           value="<?= $rememberedEmail ?>">
+    <input type="email" id="email" name="email" placeholder="you@example.com" required>
     <span class="field-msg" id="msg-email"></span>
   </div>
 
@@ -162,9 +160,11 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
     <span class="field-msg" id="msg-password"></span>
   </div>
 
+  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+
   <label class="remember-row">
-    <input type="checkbox" name="remember_email" value="1" <?= $rememberedEmail !== '' ? 'checked' : '' ?>>
-    Remember my email on this device
+    <input type="checkbox" name="remember_me" value="1">
+    Keep me signed in on this device
   </label>
 
   <div class="form-actions">
@@ -189,6 +189,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </button>
 
 <script src="gsap.min.js"></script>
+<script src="assets/site-prefs.js"></script>
 <script>
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
 let mx=0,my=0,rx=0,ry=0;
@@ -199,14 +200,8 @@ document.querySelectorAll('a,button,input').forEach(e=>{
   e.addEventListener('mouseleave',()=>{cDot.classList.remove('hov');cRing.classList.remove('hov');});
 });
 
-const tBtn=document.getElementById('themeToggle');
-const pageLogo=document.getElementById('pageLogo');
-let dark=false;
-tBtn.addEventListener('click',()=>{
-  dark=!dark;
-  document.body.classList.toggle('dark-mode',dark);
-  if(pageLogo) pageLogo.src=dark?'assets/logo-dark.png':'assets/logo-light.png';
-});
+BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle', logoId:'pageLogo' });
+BloodlinePrefs.trackLastVisitedPage('login.php');
 
 function setE(id,m){const e=document.getElementById(id);e?.classList.add('err');e?.classList.remove('ok');const ms=document.getElementById('msg-'+id);if(ms)ms.textContent=m;}
 function setO(id){const e=document.getElementById(id);e?.classList.remove('err');e?.classList.add('ok');const ms=document.getElementById('msg-'+id);if(ms)ms.textContent='';}

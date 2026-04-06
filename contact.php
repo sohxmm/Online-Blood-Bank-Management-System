@@ -143,6 +143,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <div class="reg-body">
 <form id="contactForm" method="POST" action="contact_handler.php" novalidate>
+<input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
 
 <?php if ($success): ?>
 <div style="
@@ -240,6 +241,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </button>
 
 <script src="gsap.min.js"></script>
+<script src="assets/site-prefs.js"></script>
 <script>
 /* ── CURSOR ── */
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
@@ -252,14 +254,8 @@ document.querySelectorAll('a,button,input,textarea').forEach(e=>{
 });
 
 /* ── THEME ── */
-const tBtn=document.getElementById('themeToggle');
-const pageLogo=document.getElementById('pageLogo');
-let dark=false;
-tBtn.addEventListener('click',()=>{
-  dark=!dark;
-  document.body.classList.toggle('dark-mode',dark);
-  if(pageLogo) pageLogo.src=dark?'assets/logo-dark.png':'assets/logo-light.png';
-});
+BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle', logoId:'pageLogo' });
+BloodlinePrefs.trackLastVisitedPage('contact.php');
 
 /* ── INLINE VALIDATION ── */
 function setE(id,m){const e=document.getElementById(id);e?.classList.add('err');e?.classList.remove('ok');const ms=document.getElementById('msg-'+id);if(ms)ms.textContent=m;}

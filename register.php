@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+require_csrf_token($_POST['csrf_token'] ?? null, 'registration.php');
+
 // ── Helpers ───────────────────────────────────────────────────
 function clean(string $v): string {
     return htmlspecialchars(strip_tags(trim($v)), ENT_QUOTES, 'UTF-8');
@@ -166,6 +168,5 @@ $stmt->execute();
 $stmt->close();
 
 // ── All done! ─────────────────────────────────────────────────
-remember_login_email($email);
 set_flash('flash_success', 'Registration successful! You can sign in with your new account.');
 redirect('registration.php');

@@ -9,6 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+require_csrf_token($_POST['csrf_token'] ?? null, 'contact.php');
+
 function clean(string $v): string {
     return htmlspecialchars(strip_tags(trim($v)), ENT_QUOTES, 'UTF-8');
 }

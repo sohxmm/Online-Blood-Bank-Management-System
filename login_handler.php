@@ -16,21 +16,16 @@ function redirect(string $url): void {
 
 $email    = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
 $password = $_POST['password'] ?? '';
-$rememberEmail = isset($_POST['remember_email']);
+$rememberMe = isset($_POST['remember_me']);
+
+require_csrf_token($_POST['csrf_token'] ?? null, 'login.php');
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    clear_remembered_email();
     set_flash('flash_error', 'Please enter a valid email address.');
     redirect('login.php');
 }
 
 if (strlen($password) < 8) {
-    if ($rememberEmail) {
-        remember_login_email($email);
-    } else {
-        clear_remembered_email();
-    }
-
     set_flash('flash_error', 'Password must be at least 8 characters.');
     redirect('login.php');
 }
@@ -49,22 +44,16 @@ $donor = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$donor || !password_verify($password, $donor['PasswordHash'])) {
-    if ($rememberEmail) {
-        remember_login_email($email);
-    } else {
-        clear_remembered_email();
-    }
-
     set_flash('flash_error', 'Incorrect email or password. Please try again.');
     redirect('login.php');
 }
 
 log_in_donor($donor);
 
-if ($rememberEmail) {
-    remember_login_email($email);
+if ($rememberMe) {
+    issue_persistent_login((int) $donor['DonorID']);
 } else {
-    clear_remembered_email();
+    forget_persistent_login_token();
 }
 
 redirect('dashboard.php');
