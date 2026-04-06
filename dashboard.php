@@ -2,13 +2,10 @@
 // dashboard.php — Donor Dashboard
 // Protected: only accessible after login
 
-session_start();
-if (!isset($_SESSION['donor_id'])) {
-    header('Location: login.php');
-    exit;
-}
-
+require_once 'auth.php';
 require_once 'db.php';
+
+require_login();
 $db = getDB();
 
 $donorID = (int)$_SESSION['donor_id'];
@@ -30,8 +27,10 @@ $donor = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$donor) {
-    session_destroy();
-    header('Location: login.php?error=' . urlencode('Session expired. Please sign in again.'));
+    log_out_donor();
+    boot_session();
+    set_flash('flash_error', 'Session expired. Please sign in again.');
+    header('Location: login.php');
     exit;
 }
 

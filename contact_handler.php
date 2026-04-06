@@ -1,7 +1,8 @@
 <?php
-session_start();
-
+require_once 'auth.php';
 require_once 'db.php';
+
+boot_session();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: contact.php');
@@ -22,7 +23,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email addre
 if (strlen($message) < 10)                      $errors[] = 'Message must be at least 10 characters.';
 
 if (!empty($errors)) {
-    $_SESSION['flash_error'] = implode(' | ', $errors);
+    set_flash('flash_error', implode(' | ', $errors));
     header("Location: contact.php");
     exit;
 }
@@ -34,10 +35,10 @@ $stmt = $db->prepare(
 $stmt->bind_param('sss', $name, $email, $message);
 
 if ($stmt->execute()) {
-    $_SESSION['flash_success'] = 'Message sent successfully.';
+    set_flash('flash_success', 'Message sent successfully.');
     header('Location: contact.php');
 } else {
-    $_SESSION['flash_error'] = 'Could not send message. Please try again.';
+    set_flash('flash_error', 'Could not send message. Please try again.');
     header('Location: contact.php');
 }
 

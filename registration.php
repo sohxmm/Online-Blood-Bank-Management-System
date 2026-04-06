@@ -1,12 +1,12 @@
 <?php
-session_start();
+require_once 'auth.php';
 
-$success = $_SESSION['flash_success'] ?? '';
-$error   = $_SESSION['flash_error'] ?? '';
+boot_session();
 
-unset($_SESSION['flash_success'], $_SESSION['flash_error']);
+$success = pull_flash('flash_success');
+$error   = pull_flash('flash_error');
 
-$loggedIn  = isset($_SESSION['donor_id']);
+$loggedIn  = is_logged_in();
 $donorName = $_SESSION['donor_name'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -216,7 +216,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
   <div style="width:32px;height:32px;border-radius:50%;background:#B5121F;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:.9rem;margin-top:2px;">!</div>
   <div>
     <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;color:#B5121F;margin-bottom:3px;">Please fix the following</div>
-    <div style="font-size:.8rem;color:#7f1d1d;line-height:1.7;"><?= $error ?></div>
+    <div style="font-size:.8rem;color:#7f1d1d;line-height:1.7;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
   </div>
 </div>
 <?php endif; ?>
@@ -576,11 +576,8 @@ try {
 
 /* ── SCROLL TO BANNER IF REDIRECTED ── */
 (function(){
-  const params = new URLSearchParams(window.location.search);
-  if(params.has('success') || params.has('error')){
-    const banner = document.querySelector('[style*="border-radius:10px"]');
-    if(banner) setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}), 300);
-  }
+  const banner = document.querySelector('[style*="border-radius:10px"]');
+  if(banner) setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}), 300);
 })();
 
 /* ── DISABLE SUBMIT ON SEND (prevent double-submit) ── */

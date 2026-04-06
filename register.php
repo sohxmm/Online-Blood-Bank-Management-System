@@ -4,7 +4,10 @@
 // On success → redirects back to registration.php?success=1
 // On failure → redirects back with ?error=<message>
 
+require_once 'auth.php';
 require_once 'db.php';
+
+boot_session();
 
 // ── Only accept POST ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -86,8 +89,8 @@ if ($lastDon) {
 }
 
 if (!empty($errors)) {
-    $msg = urlencode(implode(' | ', $errors));
-    redirect("registration.php?error=$msg");
+    set_flash('flash_error', implode(' | ', $errors));
+    redirect('registration.php');
 }
 
 // ── Check for duplicate email / aadhaar ──────────────────────
@@ -95,7 +98,8 @@ $stmt = $db->prepare('SELECT DonorID FROM Donor WHERE Email = ? OR AadharNo = ? 
 $stmt->bind_param('ss', $email, $aadhar);
 $stmt->execute();
 if ($stmt->get_result()->num_rows > 0) {
-    redirect('registration.php?error=' . urlencode('A donor with this email or Aadhaar already exists.'));
+    set_flash('flash_error', 'A donor with this email or Aadhaar already exists.');
+    redirect('registration.php');
 }
 $stmt->close();
 
@@ -125,7 +129,8 @@ $stmt->bind_param(
 );
 
 if (!$stmt->execute()) {
-    redirect('registration.php?error=' . urlencode('Registration failed. Please try again.'));
+    set_flash('flash_error', 'Registration failed. Please try again.');
+    redirect('registration.php');
 }
 $donorID = $db->insert_id;
 $stmt->close();
@@ -161,4 +166,6 @@ $stmt->execute();
 $stmt->close();
 
 // ── All done! ─────────────────────────────────────────────────
-redirect('registration.php?success=1');
+remember_login_email($email);
+set_flash('flash_success', 'Registration successful! You can sign in with your new account.');
+redirect('registration.php');

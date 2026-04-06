@@ -1,15 +1,16 @@
 <?php
-session_start();
+require_once 'auth.php';
 
-if (isset($_SESSION['donor_id'])) {
+boot_session();
+
+if (is_logged_in()) {
     header('Location: dashboard.php');
     exit;
 }
 
-$error = $_SESSION['flash_error'] ?? '';
-unset($_SESSION['flash_error']);
-?>
-$error = isset($_GET['error']) ? htmlspecialchars(urldecode($_GET['error']), ENT_QUOTES, 'UTF-8') : '';
+$error = pull_flash('flash_error');
+$success = pull_flash('flash_success');
+$rememberedEmail = htmlspecialchars(get_remembered_email(), ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +69,8 @@ body.dark-mode nav{background:rgba(30,14,18,.97);}
 .field input.err{border-color:var(--red);}
 .field input.ok{border-color:#22c55e;}
 .field-msg{font-size:.7rem;color:var(--red);margin-top:5px;min-height:14px;display:block;}
+.remember-row{display:flex;align-items:center;gap:12px;margin:-8px 0 8px;color:var(--gray);font-size:.8rem;}
+.remember-row input{width:16px;height:16px;accent-color:var(--red);}
 
 .form-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;margin-top:48px;}
 .submit-btn{display:flex;align-items:center;gap:14px;background:none;border:none;cursor:none;font-family:var(--sans);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--black);padding:0;}
@@ -118,12 +121,22 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <div class="reg-body">
 
+<?php if ($success): ?>
+<div id="flashBanner" style="background:rgba(34,197,94,.08);border:1.5px solid rgba(34,197,94,.5);border-radius:10px;padding:18px 28px;margin-bottom:32px;display:flex;align-items:flex-start;gap:14px;">
+  <div style="width:32px;height:32px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:.9rem;margin-top:2px;">!</div>
+  <div>
+    <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;color:#15803d;margin-bottom:3px;">All set</div>
+    <div style="font-size:.8rem;color:#166534;line-height:1.7;"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8') ?></div>
+  </div>
+</div>
+<?php endif; ?>
+
 <?php if ($error): ?>
-<div style="background:rgba(181,18,31,.06);border:1.5px solid rgba(181,18,31,.4);border-radius:10px;padding:18px 28px;margin-bottom:32px;display:flex;align-items:flex-start;gap:14px;">
+<div id="flashBanner" style="background:rgba(181,18,31,.06);border:1.5px solid rgba(181,18,31,.4);border-radius:10px;padding:18px 28px;margin-bottom:32px;display:flex;align-items:flex-start;gap:14px;">
   <div style="width:32px;height:32px;border-radius:50%;background:#B5121F;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:.9rem;margin-top:2px;">!</div>
   <div>
     <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;color:#B5121F;margin-bottom:3px;">Sign in failed</div>
-    <div style="font-size:.8rem;color:#7f1d1d;line-height:1.7;"><?= $error ?></div>
+    <div style="font-size:.8rem;color:#7f1d1d;line-height:1.7;"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
   </div>
 </div>
 <?php endif; ?>
@@ -139,7 +152,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
   <div class="field">
     <label>Email Address *</label>
     <input type="email" id="email" name="email" placeholder="you@example.com" required
-           value="<?= htmlspecialchars($_GET['email'] ?? '') ?>">
+           value="<?= $rememberedEmail ?>">
     <span class="field-msg" id="msg-email"></span>
   </div>
 
@@ -148,6 +161,11 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
     <input type="password" id="password" name="password" placeholder="Your password" required>
     <span class="field-msg" id="msg-password"></span>
   </div>
+
+  <label class="remember-row">
+    <input type="checkbox" name="remember_email" value="1" <?= $rememberedEmail !== '' ? 'checked' : '' ?>>
+    Remember my email on this device
+  </label>
 
   <div class="form-actions">
     <button type="submit" class="submit-btn" id="submitBtn">
@@ -213,12 +231,10 @@ try{
   }
 }catch(e){}
 
-// Scroll to error banner if present
+// Scroll to flash banner if present
 (function(){
-  if(new URLSearchParams(window.location.search).has('error')){
-    const banner=document.querySelector('[style*="border-radius:10px"]');
-    if(banner) setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}),300);
-  }
+  const banner=document.getElementById('flashBanner');
+  if(banner) setTimeout(()=>banner.scrollIntoView({behavior:'smooth',block:'center'}),300);
 })();
 </script>
 </body>

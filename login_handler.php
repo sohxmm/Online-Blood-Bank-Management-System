@@ -1,6 +1,8 @@
 <?php
-session_start();
+require_once 'auth.php';
 require_once 'db.php';
+
+boot_session();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: login.php');
@@ -14,14 +16,22 @@ function redirect(string $url): void {
 
 $email    = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
 $password = $_POST['password'] ?? '';
+$rememberEmail = isset($_POST['remember_email']);
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $_SESSION['flash_error'] = 'Please enter a valid email address.';
+    clear_remembered_email();
+    set_flash('flash_error', 'Please enter a valid email address.');
     redirect('login.php');
 }
 
 if (strlen($password) < 8) {
-    $_SESSION['flash_error'] = 'Password must be at least 8 characters.';
+    if ($rememberEmail) {
+        remember_login_email($email);
+    } else {
+        clear_remembered_email();
+    }
+
+    set_flash('flash_error', 'Password must be at least 8 characters.');
     redirect('login.php');
 }
 
@@ -39,12 +49,22 @@ $donor = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$donor || !password_verify($password, $donor['PasswordHash'])) {
-    $_SESSION['flash_error'] = 'Incorrect email or password. Please try again.';
+    if ($rememberEmail) {
+        remember_login_email($email);
+    } else {
+        clear_remembered_email();
+    }
+
+    set_flash('flash_error', 'Incorrect email or password. Please try again.');
     redirect('login.php');
 }
 
-$_SESSION['donor_id']    = $donor['DonorID'];
-$_SESSION['donor_name']  = $donor['FName'] . ' ' . $donor['LName'];
-$_SESSION['blood_group'] = $donor['BloodGroup'];
+log_in_donor($donor);
+
+if ($rememberEmail) {
+    remember_login_email($email);
+} else {
+    clear_remembered_email();
+}
 
 redirect('dashboard.php');
