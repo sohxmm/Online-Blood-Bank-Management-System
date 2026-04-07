@@ -1,4 +1,4 @@
-# Bloodline — Online Blood Bank Management System
+﻿# Bloodline — Online Blood Bank Management System
 
 > A full-stack web application for managing blood bank inventory, donor registrations, and hospital blood requests — built as a Web Programming & RDBMS lab mini project.
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Bloodline is an online blood bank management platform that connects donors, blood banks, and hospitals. It provides real-time inventory tracking, donor registration with medical history, and an urgent blood request system — all wrapped in a premium, typographically-driven UI.
+Bloodline is an online blood bank management platform that connects donors, blood banks, and hospitals. It provides real-time inventory tracking, robust donor registration, urgent blood requests, and a modern session/cookie layer that keeps donor preferences, remembered devices, and form state secure while maintaining the premium UI.
 
 ---
 
@@ -18,6 +18,9 @@ Bloodline is an online blood bank management platform that connects donors, bloo
 - **Relational Database** — Normalised MySQL schema covering donors, blood banks, hospitals, donations, and requests — based on a full EER diagram
 - **Dark/Light Mode** — System-wide theme toggle across all pages
 - **Custom Cursor + GSAP Animations** — Smooth entrance animations and floating bubble effects
+- **Secure Sessions & Cookies** — Shared auth helper centralizes session boot, CSRF, and persistent remember-me cookies
+- **Site Preference Utilities** — `assets/site-prefs.js` keeps theme and last-page cookies in sync across every page
+- **CSRF Token Platform** — Login, registration, contact, and the AJAX blood request form all carry tokens managed by `auth.php` and `csrf_token.php`
 
 ---
 
@@ -38,20 +41,19 @@ Bloodline is an online blood bank management platform that connects donors, bloo
 
 ```
 bloodlines/
-│
 ├── index.html               # Landing page
 ├── registration.php         # Donor registration form
 ├── make-request.html        # Blood request page
 ├── inventory.html           # Live inventory dashboard
-│
 ├── db.php                   # Database connection
 ├── register.php             # Handles donor form POST → MySQL
 ├── submit_request.php       # Handles blood request POST → MySQL
 ├── get_inventory.php        # Returns live inventory as JSON
-│
+├── auth.php                 # Shared session, CSRF, remember-me helper
+├── csrf_token.php           # Lightweight async CSRF endpoint
+├── assets/site-prefs.js     # Theme + last-page cookie utilities
 ├── gsap.min.js              # GSAP core
 ├── ScrollTrigger.min.js     # GSAP ScrollTrigger plugin
-│
 └── assets/
     ├── logo.png
     ├── logo-light.png
@@ -119,7 +121,7 @@ http://localhost/bloodlines/index.html
 
 | Page | URL | Description |
 |---|---|---|
-| Home | `/index.html` | Landing page with features, stats, team section |
+| Home | `/index.html` | Landing page with features, stats, and team section |
 | Register | `/registration.php` | Donor sign-up with full medical history |
 | Request Blood | `/make-request.html` | Select blood type and submit a request |
 | Inventory | `/inventory.html` | Live bubble view of current blood stock |
