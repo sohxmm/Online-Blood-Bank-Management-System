@@ -124,6 +124,7 @@ http://localhost/bloodlines/index.html
 | Home | `/index.html` | Landing page with features, stats, and team section |
 | Register | `/registration.php` | Donor sign-up with full medical history |
 | Request Blood | `/make-request.html` | Select blood type and submit a request |
+| Manage Requests | `/manage_requests.php` | Tabular blood-request CRUD demo with filter, update, and delete |
 | Inventory | `/inventory.html` | Live bubble view of current blood stock |
 
 ---
@@ -134,6 +135,8 @@ http://localhost/bloodlines/index.html
 |---|---|---|
 | `register.php` | POST | Validates and inserts new donor into DB |
 | `submit_request.php` | POST (JSON) | Creates a new blood request record |
+| `update_request.php` | POST | Updates `Blood_Request` records by `ReqID` |
+| `delete_request.php` | POST | Deletes `Blood_Request` records by `ReqID` |
 | `get_inventory.php` | GET | Returns JSON of current blood unit counts per type |
 
 ---

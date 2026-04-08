@@ -51,6 +51,30 @@ nav{position:fixed;top:0;left:0;right:0;height:72px;display:flex;align-items:cen
 .inv-note{font-size:.8rem;color:rgba(255,255,255,.25);letter-spacing:.08em;font-style:italic;margin-bottom:8px;}
 .inv-updated{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.2);}
 .inv-live-dot{display:inline-block;width:6px;height:6px;background:#22c55e;border-radius:50%;margin-right:6px;animation:blink 1.5s ease infinite;}
+.inv-search-wrap{margin-top:18px;}
+.inv-search{
+  width:260px;max-width:100%;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  color:var(--cream);
+  font-family:var(--sans);
+  font-size:.78rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  padding:11px 16px;
+  outline:none;
+}
+.inv-search::placeholder{color:rgba(255,255,255,.45);}
+.inv-search:focus{border-color:rgba(255,255,255,.55);}
+.inv-no-results{
+  position:absolute;left:50%;bottom:6%;
+  transform:translateX(-50%);
+  font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.55);
+  display:none;
+}
+.bubble.is-hidden{opacity:.08 !important;filter:grayscale(1);pointer-events:none;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 @keyframes bubbleFallback{to{opacity:1;transform:scale(1);}}
 
@@ -203,6 +227,9 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
   <div class="inv-header-right">
     <p class="inv-note">1 unit = 0.45 L</p>
     <p class="inv-updated"><span class="inv-live-dot"></span>Updated live</p>
+    <div class="inv-search-wrap">
+      <input id="inventorySearch" class="inv-search" type="text" placeholder="Search blood type (A+, O-, AB)">
+    </div>
   </div>
 </div>
 
@@ -248,6 +275,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
     <div class="bubble-type-lbl">AB−<br>units</div>
     <div class="bubble-critical-badge"></div>
   </div>
+  <div class="inv-no-results" id="noInventoryResults">No matching blood group found.</div>
 </div>
 
 <!-- Stats bar -->
@@ -279,6 +307,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <script src="gsap.min.js"></script>
 <script src="assets/site-prefs.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
 /* Cursor */
 const dot=document.getElementById('cursorDot'),ring=document.getElementById('cursorRing');
@@ -326,7 +355,7 @@ BloodlinePrefs.trackLastVisitedPage('inventory.html');
 </script>
 
 <script>
-async function loadInventory() {
+async function loadInventoryLegacy() {
   try {
     const res  = await fetch('get_inventory.php');
     const data = await res.json();
@@ -369,8 +398,95 @@ async function loadInventory() {
     console.error('Inventory load failed:', e);
   }
 }
-loadInventory();
-setInterval(loadInventory, 60000);
+loadInventoryLegacy();
+</script>
+
+<script>
+const allBubbles = Array.from(document.querySelectorAll('.bubble'));
+const bubbleByType = new Map();
+
+function normalizeType(value){
+  return String(value || '')
+    .toUpperCase()
+    .replace(/âˆ’|−|-/g, '-')
+    .replace(/\s+/g, '');
+}
+
+allBubbles.forEach((bubble) => {
+  const key = normalizeType(bubble.getAttribute('data-type'));
+  if (key !== '') {
+    bubbleByType.set(key, bubble);
+  }
+});
+
+function applyInventoryRows(rows){
+  const visible = new Set();
+
+  rows.forEach((item) => {
+    const key = normalizeType(item.bloodGroup);
+    if (!key) return;
+
+    visible.add(key);
+    const bubble = bubbleByType.get(key);
+    if (!bubble) return;
+
+    bubble.classList.remove('is-hidden');
+    bubble.querySelector('.bubble-val').textContent = item.units;
+    bubble.setAttribute('data-units', item.units);
+
+    const badge = bubble.querySelector('.bubble-critical-badge');
+    if (item.critical && !badge) {
+      const marker = document.createElement('div');
+      marker.className = 'bubble-critical-badge';
+      bubble.appendChild(marker);
+    }
+    if (!item.critical && badge) {
+      badge.remove();
+    }
+  });
+
+  return visible;
+}
+
+function setVisibility(visibleSet, hasFilter){
+  allBubbles.forEach((bubble) => {
+    if (!hasFilter) {
+      bubble.classList.remove('is-hidden');
+      return;
+    }
+    const type = normalizeType(bubble.getAttribute('data-type'));
+    bubble.classList.toggle('is-hidden', !visibleSet.has(type));
+  });
+}
+
+function loadInventoryLive(queryText = ''){
+  return $.getJSON('get_inventory.php', { q: queryText }).done((data) => {
+    const hasFilter = queryText.trim() !== '';
+    const visible = applyInventoryRows(data.inventory || []);
+    setVisibility(visible, hasFilter);
+
+    const emptyNote = document.getElementById('noInventoryResults');
+    if (emptyNote) {
+      emptyNote.style.display = hasFilter && visible.size === 0 ? 'block' : 'none';
+    }
+
+    const vals = document.querySelectorAll('.stat-val');
+    if (vals[0]) vals[0].textContent = data.totalUnits;
+    if (vals[1]) vals[1].textContent = data.bloodTypes;
+    if (vals[2]) vals[2].textContent = data.criticalTypes;
+    if (vals[3]) vals[3].textContent = data.pendingRequests;
+  });
+}
+
+let searchTimer = null;
+$('#inventorySearch').on('input', function(){
+  const query = $(this).val();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadInventoryLive(query), 220);
+});
+
+loadInventoryLive();
+setInterval(() => loadInventoryLive($('#inventorySearch').val() || ''), 60000);
 </script>
 
 </body>

@@ -26,6 +26,17 @@ function cookie_options(int $expires = 0, bool $httpOnly = true): array
     ];
 }
 
+function session_cookie_options(): array
+{
+    return [
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => is_https_request(),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ];
+}
+
 function clear_cookie(string $name, bool $httpOnly = true): void
 {
     setcookie($name, '', cookie_options(time() - 3600, $httpOnly));
@@ -65,7 +76,7 @@ function boot_session(): void
     }
 
     session_name(AUTH_SESSION_NAME);
-    session_set_cookie_params(cookie_options());
+    session_set_cookie_params(session_cookie_options());
     session_start();
 
     if (!isset($_SESSION['session_initialized'])) {

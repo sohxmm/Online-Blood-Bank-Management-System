@@ -1043,6 +1043,15 @@ footer {
   margin-bottom: 10px; transition: color .2s;
 }
 .footer-col a:hover { color: var(--cream); }
+.footer-note {
+  margin-top: 10px;
+  max-width: 180px;
+  font-size: .7rem;
+  line-height: 1.6;
+  letter-spacing: .04em;
+  color: rgba(255,255,255,.32);
+  font-family: var(--sans);
+}
 .footer-bottom {
   padding-top: 24px;
   display: flex; justify-content: space-between; align-items: center;
@@ -1776,6 +1785,12 @@ body.dark-mode .theme-toggle-icon { transform: rotate(25deg); }
         <a href="contact.php">Get in Touch</a>
         <a href="contact.php">Send a Message</a>
         <a href="#">Mumbai, India</a>
+      </div>
+      <div class="footer-col">
+        <h4>Admin Demo</h4>
+        <a href="manage_requests.php">Manage Requests</a>
+        <a href="manage_requests.php?status=Pending">Update Pending Requests</a>
+        <p class="footer-note">For admin use and lab demonstration only.</p>
       </div>
     </div>
   </div>

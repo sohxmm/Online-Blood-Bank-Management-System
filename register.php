@@ -8,14 +8,29 @@ require_once 'auth.php';
 require_once 'db.php';
 
 boot_session();
+$isAjaxRequest = (
+    strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest'
+    || str_contains(strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? '')), 'application/json')
+);
+if ($isAjaxRequest) {
+    header('Content-Type: application/json; charset=utf-8');
+}
 
 // ── Only accept POST ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: registration.php');
+    if ($isAjaxRequest) {
+        http_response_code(405);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid request method.',
+        ]);
+    } else {
+        header('Location: registration.php');
+    }
     exit;
 }
 
-require_csrf_token($_POST['csrf_token'] ?? null, 'registration.php');
+require_csrf_token($_POST['csrf_token'] ?? null, 'registration.php', $isAjaxRequest);
 
 // ── Helpers ───────────────────────────────────────────────────
 function clean(string $v): string {
@@ -23,6 +38,14 @@ function clean(string $v): string {
 }
 function redirect(string $url): void {
     header('Location: ' . $url);
+    exit;
+}
+function ajax_response(bool $success, string $message, int $statusCode = 200, array $extra = []): void {
+    http_response_code($statusCode);
+    echo json_encode(array_merge([
+        'success' => $success,
+        'message' => $message,
+    ], $extra));
     exit;
 }
 
@@ -91,7 +114,11 @@ if ($lastDon) {
 }
 
 if (!empty($errors)) {
-    set_flash('flash_error', implode(' | ', $errors));
+    $errorMessage = implode(' | ', $errors);
+    if ($isAjaxRequest) {
+        ajax_response(false, $errorMessage, 422);
+    }
+    set_flash('flash_error', $errorMessage);
     redirect('registration.php');
 }
 
@@ -100,6 +127,9 @@ $stmt = $db->prepare('SELECT DonorID FROM Donor WHERE Email = ? OR AadharNo = ? 
 $stmt->bind_param('ss', $email, $aadhar);
 $stmt->execute();
 if ($stmt->get_result()->num_rows > 0) {
+    if ($isAjaxRequest) {
+        ajax_response(false, 'A donor with this email or Aadhaar already exists.', 409);
+    }
     set_flash('flash_error', 'A donor with this email or Aadhaar already exists.');
     redirect('registration.php');
 }
@@ -131,6 +161,9 @@ $stmt->bind_param(
 );
 
 if (!$stmt->execute()) {
+    if ($isAjaxRequest) {
+        ajax_response(false, 'Registration failed. Please try again.', 500);
+    }
     set_flash('flash_error', 'Registration failed. Please try again.');
     redirect('registration.php');
 }
@@ -168,5 +201,10 @@ $stmt->execute();
 $stmt->close();
 
 // ── All done! ─────────────────────────────────────────────────
+if ($isAjaxRequest) {
+    ajax_response(true, 'Registration successful! You can now sign in.', 200, [
+        'donorId' => $donorID,
+    ]);
+}
 set_flash('flash_success', 'Registration successful! You can sign in with your new account.');
 redirect('registration.php');

@@ -88,6 +88,7 @@ if (!empty($hospital)) {
 }
 
 // ── INSERT Blood_Request ──────────────────────────────────────
+// CREATE query 
 // Use default BloodBankID = 1 (Bloodline Central Bank)
 $bankID = 1;
 $stmt = $db->prepare(

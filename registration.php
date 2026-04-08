@@ -222,6 +222,8 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 </div>
 <?php endif; ?>
 
+<div id="ajaxBanner" style="display:none;border-radius:10px;padding:18px 28px;margin-bottom:32px;align-items:flex-start;gap:14px;"></div>
+
   <!-- ── PERSONAL INFO ── -->
   <div class="sec-div"><div class="sec-div-line"></div><div class="sec-div-label">Personal Information</div><div class="sec-div-line"></div></div>
   <div class="fg">
@@ -431,6 +433,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <script src="gsap.min.js"></script>
 <script src="assets/site-prefs.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
 /* ── CURSOR ── */
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
@@ -608,6 +611,63 @@ document.getElementById('donorForm').addEventListener('submit', function(e){
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
   btn.querySelector('.submit-circle').textContent = '…';
+});
+
+function showAjaxBanner(success, message){
+  const banner = document.getElementById('ajaxBanner');
+  if(!banner) return;
+  banner.style.display = 'flex';
+  banner.style.background = success ? 'rgba(34,197,94,.08)' : 'rgba(181,18,31,.06)';
+  banner.style.border = success ? '1.5px solid rgba(34,197,94,.5)' : '1.5px solid rgba(181,18,31,.4)';
+  banner.innerHTML = `
+    <div style="width:32px;height:32px;border-radius:50%;background:${success ? '#22c55e' : '#B5121F'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:.9rem;margin-top:2px;">!</div>
+    <div>
+      <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.15rem;color:${success ? '#15803d' : '#B5121F'};margin-bottom:3px;">${success ? 'Registration successful' : 'Registration failed'}</div>
+      <div style="font-size:.8rem;color:${success ? '#166534' : '#7f1d1d'};line-height:1.7;">${message}</div>
+    </div>
+  `;
+  banner.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+document.getElementById('donorForm').addEventListener('submit', function(e){
+  if (e.defaultPrevented || typeof window.jQuery === 'undefined') {
+    return;
+  }
+
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const $form = $('#donorForm');
+
+  $.ajax({
+    url: $form.attr('action'),
+    method: 'POST',
+    data: $form.serialize(),
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    dataType: 'json'
+  }).done(function(resp){
+    if(resp && resp.success){
+      showAjaxBanner(true, resp.message || 'Your donor profile has been created.');
+      $form[0].reset();
+      document.querySelectorAll('.check-box').forEach((box)=>{ box.classList.remove('checked'); box.textContent=''; });
+      consentInput.checked = false;
+      consentBox.classList.remove('checked');
+      consentBox.textContent = '';
+      document.querySelectorAll('.ok,.err').forEach((el)=>el.classList.remove('ok','err'));
+      document.querySelectorAll('.field-msg').forEach((msg)=>{ msg.textContent=''; });
+      const pwBar = document.getElementById('pwBar');
+      const pwLbl = document.getElementById('pwLbl');
+      if (pwBar) pwBar.style.width = '0';
+      if (pwLbl) pwLbl.textContent = '';
+    } else {
+      showAjaxBanner(false, (resp && resp.message) ? resp.message : 'Unable to submit form.');
+    }
+  }).fail(function(xhr){
+    const msg = xhr.responseJSON?.message || 'Network/server error. Please try again.';
+    showAjaxBanner(false, msg);
+  }).always(function(){
+    btn.disabled = false;
+    btn.querySelector('.submit-circle').textContent = '→';
+  });
 });
 </script>
 </body>

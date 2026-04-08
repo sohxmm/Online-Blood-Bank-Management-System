@@ -80,6 +80,8 @@ $rememberedMessage = $rememberedLogin
         . ($lastVisitedLabel !== '' ? ' after your last visit to ' . $lastVisitedLabel : '')
         . '.'
     : '';
+$statsToDefault = date('Y-m-d');
+$statsFromDefault = date('Y-m-d', strtotime('-30 days'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -164,6 +166,29 @@ body.dark-mode .stat-card{background:var(--cream);}
 
 .empty-note{font-size:.85rem;color:var(--gray);font-style:italic;padding:24px 0;}
 
+/* AJAX analytics */
+.analytics-card{margin-top:42px;border:1px solid rgba(181,18,31,.12);padding:26px 24px;border-radius:18px;background:rgba(181,18,31,.02);}
+.analytics-top{display:flex;justify-content:space-between;gap:20px;align-items:end;flex-wrap:wrap;margin-bottom:20px}
+.analytics-title{font-family:var(--serif);font-size:2rem;line-height:1}
+.analytics-sub{font-size:.8rem;color:var(--gray);margin-top:6px}
+.analytics-filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.analytics-filters label{display:block;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);margin-bottom:5px}
+.analytics-filters input{border:1px solid var(--gray-light);border-radius:10px;padding:9px 11px;background:var(--cream);color:var(--black);font-family:var(--sans);}
+.analytics-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--black);padding:10px 14px;border-radius:999px;background:var(--black);color:var(--cream);text-decoration:none;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--gray-light);border:1px solid var(--gray-light)}
+.analytics-metric{background:var(--cream);padding:18px 14px}
+.analytics-metric-val{font-family:var(--serif);font-size:2rem;line-height:1;margin-bottom:4px}
+.analytics-metric-lbl{font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray)}
+.analytics-bars{margin-top:16px;display:grid;gap:10px}
+.analytics-bar-row{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:10px}
+.analytics-bar-row span{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray)}
+.analytics-track{height:8px;border-radius:999px;background:rgba(181,18,31,.1);overflow:hidden}
+.analytics-fill{height:100%;width:0;transition:width .35s ease}
+.analytics-fill.pending{background:#b5121f}
+.analytics-fill.fulfilled{background:#15803d}
+.analytics-fill.cancelled{background:#6b7280}
+.analytics-error{font-size:.78rem;color:#991b1b;margin-top:12px;display:none}
+
 /* Actions row */
 .action-row{display:flex;gap:24px;flex-wrap:wrap;margin-top:64px;padding-top:40px;border-top:1px solid rgba(181,18,31,.1);}
 .action-link{display:flex;align-items:center;gap:10px;text-decoration:none;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--black);cursor:none;transition:color .2s;}
@@ -183,6 +208,16 @@ body.dark-mode .tog-sun{border-color:#FAF0F2;}
 body.dark-mode .tog-sun::before{box-shadow:none;opacity:0;}
 body.dark-mode .tog-moon{background:rgba(26,10,13,.9);transform:scale(1);}
 body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
+@media (max-width: 920px){
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .detail-grid{grid-template-columns:1fr;}
+  .analytics-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width: 640px){
+  .dash-hero,.dash-body{padding-left:20px;padding-right:20px;}
+  .analytics-grid{grid-template-columns:1fr;}
+  .analytics-bar-row{grid-template-columns:90px 1fr auto;}
+}
 </style>
 </head>
 <body>
@@ -317,6 +352,70 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
     </table>
   <?php endif; ?>
 
+  <div class="sec-div">
+    <div class="sec-div-line"></div>
+    <div class="sec-div-label">Request Analytics (AJAX)</div>
+    <div class="sec-div-line"></div>
+  </div>
+
+  <section class="analytics-card">
+    <div class="analytics-top">
+      <div>
+        <h3 class="analytics-title">Date-wise Request Trends</h3>
+        <p class="analytics-sub">Select a date range to refresh request statistics without reloading.</p>
+      </div>
+      <div class="analytics-filters">
+        <div>
+          <label for="statsFrom">From</label>
+          <input type="date" id="statsFrom" value="<?= htmlspecialchars($statsFromDefault, ENT_QUOTES, 'UTF-8') ?>">
+        </div>
+        <div>
+          <label for="statsTo">To</label>
+          <input type="date" id="statsTo" value="<?= htmlspecialchars($statsToDefault, ENT_QUOTES, 'UTF-8') ?>">
+        </div>
+        <button class="analytics-btn" id="applyStatsRange" type="button">Apply Range</button>
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+      <article class="analytics-metric">
+        <div class="analytics-metric-val" id="metricTotalRequests">0</div>
+        <div class="analytics-metric-lbl">Total Requests</div>
+      </article>
+      <article class="analytics-metric">
+        <div class="analytics-metric-val" id="metricTotalUnits">0</div>
+        <div class="analytics-metric-lbl">Units Requested</div>
+      </article>
+      <article class="analytics-metric">
+        <div class="analytics-metric-val" id="metricPending">0</div>
+        <div class="analytics-metric-lbl">Pending</div>
+      </article>
+      <article class="analytics-metric">
+        <div class="analytics-metric-val" id="metricFulfilled">0</div>
+        <div class="analytics-metric-lbl">Fulfilled</div>
+      </article>
+    </div>
+
+    <div class="analytics-bars">
+      <div class="analytics-bar-row">
+        <span>Pending</span>
+        <div class="analytics-track"><div class="analytics-fill pending" id="barPending"></div></div>
+        <strong id="barPendingText">0</strong>
+      </div>
+      <div class="analytics-bar-row">
+        <span>Fulfilled</span>
+        <div class="analytics-track"><div class="analytics-fill fulfilled" id="barFulfilled"></div></div>
+        <strong id="barFulfilledText">0</strong>
+      </div>
+      <div class="analytics-bar-row">
+        <span>Cancelled</span>
+        <div class="analytics-track"><div class="analytics-fill cancelled" id="barCancelled"></div></div>
+        <strong id="barCancelledText">0</strong>
+      </div>
+    </div>
+    <p class="analytics-error" id="analyticsError"></p>
+  </section>
+
   <!-- QUICK ACTIONS -->
   <div class="action-row">
     <a href="make-request.html" class="action-link">
@@ -344,6 +443,7 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
 
 <script src="gsap.min.js"></script>
 <script src="assets/site-prefs.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script>
 const cDot=document.getElementById('cDot'),cRing=document.getElementById('cRing');
 let mx=0,my=0,rx=0,ry=0;
@@ -355,6 +455,57 @@ document.querySelectorAll('a,button').forEach(e=>{
 });
 BloodlinePrefs.initThemeToggle({ buttonId:'themeToggle', logoId:'pageLogo' });
 BloodlinePrefs.trackLastVisitedPage('dashboard.php');
+
+function setAnalyticsError(message){
+  const errorEl = document.getElementById('analyticsError');
+  if (!errorEl) return;
+  errorEl.textContent = message || '';
+  errorEl.style.display = message ? 'block' : 'none';
+}
+
+function renderAnalytics(data){
+  const totalRequests = Number(data.totalRequests || 0);
+  const totalUnits = Number(data.totalUnits || 0);
+  const pending = Number(data.pending || 0);
+  const fulfilled = Number(data.fulfilled || 0);
+  const cancelled = Number(data.cancelled || 0);
+  const maxVal = Math.max(pending, fulfilled, cancelled, 1);
+
+  document.getElementById('metricTotalRequests').textContent = totalRequests;
+  document.getElementById('metricTotalUnits').textContent = totalUnits;
+  document.getElementById('metricPending').textContent = pending;
+  document.getElementById('metricFulfilled').textContent = fulfilled;
+
+  document.getElementById('barPending').style.width = ((pending / maxVal) * 100).toFixed(1) + '%';
+  document.getElementById('barFulfilled').style.width = ((fulfilled / maxVal) * 100).toFixed(1) + '%';
+  document.getElementById('barCancelled').style.width = ((cancelled / maxVal) * 100).toFixed(1) + '%';
+
+  document.getElementById('barPendingText').textContent = pending;
+  document.getElementById('barFulfilledText').textContent = fulfilled;
+  document.getElementById('barCancelledText').textContent = cancelled;
+}
+
+function fetchDashboardStats(){
+  const from = $('#statsFrom').val();
+  const to = $('#statsTo').val();
+  setAnalyticsError('');
+
+  $.getJSON('dashboard_stats.php', { from, to })
+    .done(function(resp){
+      if (!resp.success) {
+        setAnalyticsError(resp.message || 'Could not load analytics right now.');
+        return;
+      }
+      renderAnalytics(resp);
+    })
+    .fail(function(xhr){
+      const message = xhr.responseJSON?.message || 'Failed to load analytics. Please try again.';
+      setAnalyticsError(message);
+    });
+}
+
+$('#applyStatsRange').on('click', fetchDashboardStats);
+fetchDashboardStats();
 
 try{
   if(typeof gsap!=='undefined'){
