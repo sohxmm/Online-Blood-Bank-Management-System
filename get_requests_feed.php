@@ -7,6 +7,15 @@ require_once 'db.php';
 
 boot_session();
 
+if (!is_logged_in()) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Please sign in again.',
+    ]);
+    exit;
+}
+
 $statusFilter = trim((string) ($_GET['status'] ?? ''));
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $limit = max(1, min(20, (int) ($_GET['limit'] ?? 5)));

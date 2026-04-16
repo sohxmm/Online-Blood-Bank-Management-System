@@ -42,19 +42,21 @@ $regular = $stmtR->get_result()->fetch_assoc();
 $stmtR->close();
 
 // Fetch blood requests submitted under this donor's name
-$stmtReq = $db->prepare(
-    'SELECT BloodGroup, UnitsRequested, Urgency, Status, RequestDate
-     FROM   Blood_Request
-     WHERE  RequesterPhone = (
-         SELECT PhoneNo FROM Donor_Contact WHERE DonorID = ? LIMIT 1
-     )
-     ORDER  BY RequestDate DESC
-     LIMIT  5'
-);
-$stmtReq->bind_param('i', $donorID);
-$stmtReq->execute();
-$requests = $stmtReq->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmtReq->close();
+$requests = [];
+$requesterPhone = isset($donor['PhoneNo']) ? trim((string) $donor['PhoneNo']) : '';
+if ($requesterPhone !== '') {
+    $stmtReq = $db->prepare(
+        'SELECT BloodGroup, UnitsRequested, Urgency, Status, RequestDate
+         FROM   Blood_Request
+         WHERE  RequesterPhone = ?
+         ORDER  BY RequestDate DESC
+         LIMIT  5'
+    );
+    $stmtReq->bind_param('s', $requesterPhone);
+    $stmtReq->execute();
+    $requests = $stmtReq->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmtReq->close();
+}
 
 // Helper
 function fmt(?string $date): string {
