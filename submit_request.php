@@ -10,17 +10,29 @@ require_once 'db.php';
 boot_session();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
     exit;
 }
 
 // ── Read JSON body (sent by fetch() as JSON) ─────────────────
-$raw  = file_get_contents('php://input');
-$data = json_decode($raw, true);
+$raw = trim((string) file_get_contents('php://input'));
+$data = null;
+if ($raw !== '') {
+    $data = json_decode($raw, true);
+    if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid JSON payload.']);
+        exit;
+    }
+}
 
-if (!$data) {
+if (!is_array($data)) {
     // Fallback: try $_POST (if sent as form-encoded)
     $data = $_POST;
+}
+if (!is_array($data)) {
+    $data = [];
 }
 
 require_csrf_token($data['csrf_token'] ?? null, 'make-request.html', true);
@@ -38,16 +50,29 @@ $patient    = jclean($data['patient']   ?? '');
 $bloodGroup = jclean($data['bloodType'] ?? '');
 
 // ── Validate ──────────────────────────────────────────────────
-if (empty($name) || empty($phone)) {
-    echo json_encode(['success' => false, 'message' => 'Name and phone are required.']);
+if (strlen($name) < 2) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Name must be at least 2 characters.']);
     exit;
 }
-if (empty($bloodGroup)) {
-    echo json_encode(['success' => false, 'message' => 'Blood type is required.']);
+if (empty($phone) || strlen($phone) < 10 || strlen($phone) > 15) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Phone number must be 10 to 15 digits.']);
     exit;
 }
 if ($units < 1 || $units > 20) {
+    http_response_code(422);
     echo json_encode(['success' => false, 'message' => 'Units must be between 1 and 20.']);
+    exit;
+}
+if (strlen($hospital) > 120) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Hospital name is too long.']);
+    exit;
+}
+if (strlen($patient) > 120) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Patient name is too long.']);
     exit;
 }
 
@@ -65,12 +90,27 @@ $urgencyVal = $urgencyMap[$urgency] ?? 'Scheduled';
 // Fix minus sign difference (HTML uses − U+2212, MySQL enum uses -)
 $bloodGroup = str_replace('−', '-', $bloodGroup);
 
+$bloodGroup = str_replace("\u{2212}", '-', $bloodGroup);
+$bloodGroup = strtoupper(str_replace(' ', '', $bloodGroup));
+
+$allowedBloodGroups = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-'];
+if (!in_array($bloodGroup, $allowedBloodGroups, true)) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Please select a valid blood type.']);
+    exit;
+}
+
 $db = getDB();
 
 // ── Resolve / create Hospital row ─────────────────────────────
 $hospitalID = null;
 if (!empty($hospital)) {
     $stmt = $db->prepare('SELECT HospitalID FROM Hospital WHERE Name = ? LIMIT 1');
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server error. Please try again.']);
+        exit;
+    }
     $stmt->bind_param('s', $hospital);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
@@ -80,6 +120,11 @@ if (!empty($hospital)) {
         $hospitalID = (int)$row['HospitalID'];
     } else {
         $stmt = $db->prepare('INSERT INTO Hospital (Name) VALUES (?)');
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Server error. Please try again.']);
+            exit;
+        }
         $stmt->bind_param('s', $hospital);
         $stmt->execute();
         $hospitalID = $db->insert_id;
@@ -97,6 +142,11 @@ $stmt = $db->prepare(
       Urgency, RequesterName, RequesterPhone, PatientName)
      VALUES (?,?,?,?,?,?,?,?)'
 );
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error. Please try again.']);
+    exit;
+}
 $stmt->bind_param(
     'iisisss' . 's',
     $bankID, $hospitalID, $bloodGroup,
@@ -113,5 +163,6 @@ if ($stmt->execute()) {
     ]);
 } else {
     $stmt->close();
+    http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Could not save request. Please try again.']);
 }

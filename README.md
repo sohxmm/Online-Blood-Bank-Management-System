@@ -126,6 +126,7 @@ http://localhost/bloodlines/index.html
 | Request Blood | `/make-request.html` | Select blood type and submit a request |
 | Manage Requests | `/manage_requests.php` | Tabular blood-request CRUD demo with filter, update, and delete |
 | Inventory | `/inventory.html` | Live bubble view of current blood stock |
+| Experiment 6 Demo | `/exp6_routines_demo.php` | Stored procedure + function + cursor demo |
 
 ---
 

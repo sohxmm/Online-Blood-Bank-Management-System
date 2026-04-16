@@ -2,7 +2,7 @@
 require_once 'auth.php';
 require_once 'db.php';
 
-boot_session();
+require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: manage_requests.php');
