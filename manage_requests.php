@@ -78,6 +78,11 @@ body{font-family:var(--sans);background:var(--cream);color:var(--black);padding:
 .danger-btn{border-color:#d5949b;color:var(--red)}
 .filter-card,.table-card,.flash{background:#fff;border:1px solid var(--gray-light);border-radius:24px;box-shadow:0 10px 30px rgba(26,10,13,.04)}
 .filter-card{padding:20px 24px;margin-bottom:24px}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px}
+.info-card{background:#fffaf7;border:1px solid #eee7e2;border-radius:22px;padding:18px 20px}
+.info-kicker{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);margin-bottom:8px}
+.info-title{font-family:var(--serif);font-size:1.45rem;margin-bottom:6px}
+.info-copy{font-size:.9rem;line-height:1.7;color:var(--gray)}
 .filter-form{display:flex;gap:16px;align-items:end;flex-wrap:wrap}
 .field{display:flex;flex-direction:column;gap:8px;min-width:220px}
 .field label{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray)}
@@ -120,7 +125,7 @@ td{font-size:.94rem}
   <div class="topbar">
     <div>
       <h1 class="title">Manage <em>Blood Requests</em></h1>
-      <p class="sub">CRUD Demo for evaluation.</p>
+      <p class="sub">Transaction-aware request console with inventory protection, rollback support, and an audit trail for Bloodline operations.</p>
       <div class="actions">
         <a class="link-btn" href="make-request.html">Create Request</a>
         <a class="link-btn" href="dashboard.php">Dashboard</a>
@@ -134,6 +139,24 @@ td{font-size:.94rem}
   <?php if ($flashError !== ''): ?>
     <div class="flash error"><?= h($flashError) ?></div>
   <?php endif; ?>
+
+  <div class="info-grid">
+    <section class="info-card">
+      <div class="info-kicker">TCL In Action</div>
+      <h2 class="info-title">Transaction-safe fulfillment</h2>
+      <p class="info-copy">When a request moves to <strong>Fulfilled</strong>, Bloodline starts a database transaction, locks the request and inventory rows, updates stock, writes an audit log, and only then commits the change.</p>
+    </section>
+    <section class="info-card">
+      <div class="info-kicker">Rollback Protection</div>
+      <h2 class="info-title">Inventory stays consistent</h2>
+      <p class="info-copy">If stock is insufficient or a delete or update fails midway, the workflow rolls back and keeps <code>Blood_Request</code> and <code>Blood_Inventory</code> synchronized.</p>
+    </section>
+    <section class="info-card">
+      <div class="info-kicker">DCL Context</div>
+      <h2 class="info-title">Operator and auditor roles</h2>
+      <p class="info-copy">The supporting SQL grants request-processing rights to operators and read-only rights to auditors, matching this project’s hospital request management flow.</p>
+    </section>
+  </div>
 
   <div class="filter-card">
     <form class="filter-form" method="GET" action="manage_requests.php">

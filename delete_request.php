@@ -1,6 +1,7 @@
 <?php
 require_once 'auth.php';
 require_once 'db.php';
+require_once 'request_transaction.php';
 
 require_login();
 
@@ -21,21 +22,13 @@ if ($requestId < 1) {
 }
 
 $db = getDB();
-// DELETE query used in the lab demo.
-$stmt = $db->prepare(
-    'DELETE FROM Blood_Request
-     WHERE ReqID = ?'
-);
-$stmt->bind_param('i', $requestId);
-$stmt->execute();
 
-if ($stmt->affected_rows > 0) {
-    set_flash('flash_success', 'Blood request deleted successfully.');
-} else {
-    set_flash('flash_error', 'No blood request was deleted.');
+try {
+    $message = delete_request_transactionally($db, $requestId, request_transaction_actor());
+    set_flash('flash_success', $message);
+} catch (Throwable $e) {
+    set_flash('flash_error', $e->getMessage());
 }
-
-$stmt->close();
 
 $redirect = 'manage_requests.php';
 if ($statusFilter !== '') {

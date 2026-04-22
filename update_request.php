@@ -1,6 +1,7 @@
 <?php
 require_once 'auth.php';
 require_once 'db.php';
+require_once 'request_transaction.php';
 
 require_login();
 
@@ -39,22 +40,20 @@ if (!in_array($urgency, $allowedUrgencies, true) || !in_array($status, $allowedS
 }
 
 $db = getDB();
-// UPDATE query used in the lab demo.
-$stmt = $db->prepare(
-    'UPDATE Blood_Request
-     SET UnitsRequested = ?, Urgency = ?, Status = ?
-     WHERE ReqID = ?'
-);
-$stmt->bind_param('issi', $unitsRequested, $urgency, $status, $requestId);
-$stmt->execute();
 
-if ($stmt->affected_rows >= 0) {
-    set_flash('flash_success', 'Blood request updated successfully.');
-} else {
-    set_flash('flash_error', 'Could not update the blood request.');
+try {
+    $message = update_request_transactionally(
+        $db,
+        $requestId,
+        $unitsRequested,
+        $urgency,
+        $status,
+        request_transaction_actor()
+    );
+    set_flash('flash_success', $message);
+} catch (Throwable $e) {
+    set_flash('flash_error', $e->getMessage());
 }
-
-$stmt->close();
 
 $redirect = 'manage_requests.php';
 if ($statusFilter !== '') {

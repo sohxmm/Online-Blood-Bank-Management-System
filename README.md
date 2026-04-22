@@ -15,7 +15,9 @@ Bloodline is an online blood bank management platform that connects donors, bloo
 - **Live Inventory Dashboard** — Visual bubble-map of all 8 blood types with real-time unit counts and critical stock alerts
 - **Donor Registration** — Full medical history form with Aadhaar verification, health questionnaire, allergy screening, and password-protected accounts
 - **Blood Request System** — Hospitals can submit urgent/scheduled blood requests by type, with urgency levels and patient details
+- **Transaction-Safe Request Processing** — Request fulfillment, revert, and delete actions keep inventory synchronized using commit/rollback logic
 - **Relational Database** — Normalised MySQL schema covering donors, blood banks, hospitals, donations, and requests — based on a full EER diagram
+- **Audit + Access Control** — Transaction events are captured in `Request_Transaction_Log`, and operator/auditor privileges are defined in `sql/transaction_security.sql`
 - **Dark/Light Mode** — System-wide theme toggle across all pages
 - **Custom Cursor + GSAP Animations** — Smooth entrance animations and floating bubble effects
 - **Secure Sessions & Cookies** — Shared auth helper centralizes session boot, CSRF, and persistent remember-me cookies
@@ -124,7 +126,7 @@ http://localhost/bloodlines/index.html
 | Home | `/index.html` | Landing page with features, stats, and team section |
 | Register | `/registration.php` | Donor sign-up with full medical history |
 | Request Blood | `/make-request.html` | Select blood type and submit a request |
-| Manage Requests | `/manage_requests.php` | Tabular blood-request CRUD demo with filter, update, and delete |
+| Manage Requests | `/manage_requests.php` | Transaction-aware request console with filter, update, delete, and inventory-safe fulfillment |
 | Inventory | `/inventory.html` | Live bubble view of current blood stock |
 | Experiment 6 Demo | `/exp6_routines_demo.php` | Stored procedure + function + cursor demo |
 
@@ -136,9 +138,19 @@ http://localhost/bloodlines/index.html
 |---|---|---|
 | `register.php` | POST | Validates and inserts new donor into DB |
 | `submit_request.php` | POST (JSON) | Creates a new blood request record |
-| `update_request.php` | POST | Updates `Blood_Request` records by `ReqID` |
-| `delete_request.php` | POST | Deletes `Blood_Request` records by `ReqID` |
+| `update_request.php` | POST | Transaction-aware request update that keeps `Blood_Inventory` in sync |
+| `delete_request.php` | POST | Transaction-aware request delete that restores stock before removing fulfilled requests |
 | `get_inventory.php` | GET | Returns JSON of current blood unit counts per type |
+
+---
+
+## TCL / DCL Integration
+
+- `request_transaction.php` contains the transaction workflow for Bloodline request processing.
+- `update_request.php` now uses a write transaction, a savepoint, row locks, and commit/rollback logic before changing inventory-backed requests.
+- `delete_request.php` restores inventory inside the same transaction before deleting a fulfilled request.
+- `Request_Transaction_Log` stores an audit trail for each update/delete event.
+- `sql/transaction_security.sql` contains MySQL TCL and DCL commands for this project, including `START TRANSACTION`, `SAVEPOINT`, `COMMIT`, `CREATE ROLE`, `GRANT`, and `REVOKE`.
 
 ---
 
