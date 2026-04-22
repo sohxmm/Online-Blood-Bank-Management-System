@@ -139,8 +139,8 @@ $bankID = 1;
 $stmt = $db->prepare(
     'INSERT INTO Blood_Request
      (BloodBankID, HospitalID, BloodGroup, UnitsRequested,
-      Urgency, RequesterName, RequesterPhone, PatientName)
-     VALUES (?,?,?,?,?,?,?,?)'
+      Urgency, RequesterName, OwnerName, RequesterPhone, PatientName, ReqDate)
+     VALUES (?,?,?,?,?,?,?,?,?, NOW())'
 );
 if (!$stmt) {
     http_response_code(500);
@@ -148,9 +148,9 @@ if (!$stmt) {
     exit;
 }
 $stmt->bind_param(
-    'iisisss' . 's',
+    'iisissss' . 's',
     $bankID, $hospitalID, $bloodGroup,
-    $units, $urgencyVal, $name, $phone, $patient
+    $units, $urgencyVal, $name, $name, $phone, $patient
 );
 
 if ($stmt->execute()) {

@@ -73,7 +73,9 @@ bloodlines/
 
 ## Database Schema
 
-The schema is derived from the EER diagram and relational mapping submitted as part of the RDBMS assignment. It includes **17 tables**:
+The schema follows the final ER diagram in a **hybrid app schema** form: core academic entities stay aligned with the ERD, while operational tables needed by the running site remain in place.
+
+It currently contains **20 tables + 1 view**:
 
 **Core entities:** `Donor`, `Blood_Bank`, `Hospital`, `Blood_Donations`, `Blood_Request`
 
@@ -81,9 +83,13 @@ The schema is derived from the EER diagram and relational mapping submitted as p
 
 **Multi-valued attributes:** `Donor_Contact`, `BloodBank_Address`, `BloodBank_Contact`, `Hospital_Address`, `Hospital_Contact`
 
-**Relationship tables:** `Donates`, `Registers_At`, `Supplies`
+**Relationship tables:** `Donates`, `Registers_At`
+
+**Operational extensions:** `Blood_Inventory`, `Request_Transaction_Log`, `Donor_Remember_Token`, `Contact_Messages`
 
 **View:** `vw_inventory` — aggregates total units per blood group
+
+`Supplies` has been removed from the final schema because the live request/inventory workflow now uses `Blood_Request` + `Blood_Inventory` transaction logic instead of a donation-to-request bridge table.
 
 ---
 
@@ -110,6 +116,8 @@ Open XAMPP Control Panel → Start **Apache** and **MySQL**
 - Go to `http://localhost/phpmyadmin`
 - Create a new database named `bloodline_db` with collation `utf8mb4_unicode_ci`
 - Select the database → Import tab → upload `bloodline.sql` → Go
+- If you are aligning an older copy of the schema to the final ERD, import `sql/final_erd_hybrid_alignment.sql`
+  or simply load the app once; `db.php` applies the same compatibility pass automatically.
 
 **4. Open the app**
 

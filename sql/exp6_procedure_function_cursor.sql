@@ -9,6 +9,8 @@
 -- Notes:
 -- - MySQL/MariaDB cursors exist only inside stored programs (procedures/functions).
 -- - These routines are prefixed with exp6_* to keep them clearly scoped to the lab.
+-- - The project now uses the final ERD in hybrid form: `Supplies` is removed, while
+--   `Blood_Request` and `Blood_Inventory` remain as operational workflow tables.
 
 DELIMITER $$
 

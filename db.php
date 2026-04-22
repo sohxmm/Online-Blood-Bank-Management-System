@@ -2,6 +2,8 @@
 // db.php — single place for all DB config
 // Include this at the top of every PHP file: require_once 'db.php';
 
+require_once 'schema_compat.php';
+
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');       // XAMPP default
 define('DB_PASS', '');           // XAMPP default (leave blank)
@@ -16,6 +18,7 @@ function getDB(): mysqli {
             die(json_encode(['success' => false, 'message' => 'DB connection failed: ' . $conn->connect_error]));
         }
         $conn->set_charset('utf8mb4');
+        ensure_hybrid_schema($conn);
     }
     return $conn;
 }

@@ -187,10 +187,11 @@ $stmt->close();
 // ── First-time or Regular donor ───────────────────────────────
 if ($lastDon) {
     $stmt = $db->prepare(
-        'INSERT INTO Regular_Donor (DonorID, TotalDonations, LastDonationDate) VALUES (?,?,?)'
+        'INSERT INTO Regular_Donor (DonorID, TotalDonations, LastDonationDate, LastDonation)
+         VALUES (?,?,?,?)'
     );
     $td = max(1, $units);
-    $stmt->bind_param('iis', $donorID, $td, $lastDon);
+    $stmt->bind_param('iiss', $donorID, $td, $lastDon, $lastDon);
 } else {
     $stmt = $db->prepare(
         'INSERT INTO First_Time_Donor (DonorID, RegistrationDate) VALUES (?,?)'

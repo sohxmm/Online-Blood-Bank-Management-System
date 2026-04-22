@@ -35,7 +35,13 @@ if (!$donor) {
 }
 
 // Check Regular or First-Time donor
-$stmtR = $db->prepare('SELECT TotalDonations, LastDonationDate FROM Regular_Donor WHERE DonorID = ? LIMIT 1');
+$stmtR = $db->prepare(
+    'SELECT TotalDonations,
+            COALESCE(LastDonation, LastDonationDate) AS LastDonationDate
+     FROM Regular_Donor
+     WHERE DonorID = ?
+     LIMIT 1'
+);
 $stmtR->bind_param('i', $donorID);
 $stmtR->execute();
 $regular = $stmtR->get_result()->fetch_assoc();

@@ -35,7 +35,9 @@ if ($filterActive) {
 
     $stmt = $db->prepare(
         'SELECT br.ReqID AS RequestID, br.BloodGroup, br.UnitsRequested, br.Urgency, br.Status,
-                br.RequestDate, br.RequesterName, br.RequesterPhone, br.PatientName,
+                COALESCE(br.ReqDate, br.RequestDate) AS RequestDate,
+                COALESCE(br.OwnerName, br.RequesterName) AS RequesterName,
+                br.RequesterPhone, br.PatientName,
                 h.Name AS HospitalName
          FROM Blood_Request br
          LEFT JOIN Hospital h ON h.HospitalID = br.HospitalID
@@ -49,7 +51,9 @@ if ($filterActive) {
 
     $stmt = $db->prepare(
         'SELECT br.ReqID AS RequestID, br.BloodGroup, br.UnitsRequested, br.Urgency, br.Status,
-                br.RequestDate, br.RequesterName, br.RequesterPhone, br.PatientName,
+                COALESCE(br.ReqDate, br.RequestDate) AS RequestDate,
+                COALESCE(br.OwnerName, br.RequesterName) AS RequesterName,
+                br.RequesterPhone, br.PatientName,
                 h.Name AS HospitalName
          FROM Blood_Request br
          LEFT JOIN Hospital h ON h.HospitalID = br.HospitalID

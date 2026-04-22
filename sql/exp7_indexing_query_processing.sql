@@ -3,6 +3,8 @@
 --
 -- Goal: Observe query plan differences with and without indexes using EXPLAIN / EXPLAIN ANALYZE.
 -- Note: If `EXPLAIN ANALYZE` is not supported on your setup, use plain `EXPLAIN`.
+-- Schema note: the final ERD is implemented in hybrid form, so request workflow
+-- columns are retained even though the legacy `Supplies` relationship is removed.
 
 -- ---------------------------------------------------------------------------
 -- Helper: safely drop an index only if it exists (avoids import-stopping errors)

@@ -16,7 +16,9 @@ $flashError = pull_flash('flash_error');
 if ($filterActive) {
     $stmt = $db->prepare(
         'SELECT br.ReqID AS RequestID, br.BloodGroup, br.UnitsRequested, br.Urgency, br.Status,
-                br.RequestDate, br.RequesterName, br.RequesterPhone, br.PatientName,
+                COALESCE(br.ReqDate, br.RequestDate) AS RequestDate,
+                COALESCE(br.OwnerName, br.RequesterName) AS RequesterName,
+                br.RequesterPhone, br.PatientName,
                 h.Name AS HospitalName
          FROM Blood_Request br
          LEFT JOIN Hospital h ON h.HospitalID = br.HospitalID
@@ -27,7 +29,9 @@ if ($filterActive) {
 } else {
     $stmt = $db->prepare(
         'SELECT br.ReqID AS RequestID, br.BloodGroup, br.UnitsRequested, br.Urgency, br.Status,
-                br.RequestDate, br.RequesterName, br.RequesterPhone, br.PatientName,
+                COALESCE(br.ReqDate, br.RequestDate) AS RequestDate,
+                COALESCE(br.OwnerName, br.RequesterName) AS RequesterName,
+                br.RequesterPhone, br.PatientName,
                 h.Name AS HospitalName
          FROM Blood_Request br
          LEFT JOIN Hospital h ON h.HospitalID = br.HospitalID
@@ -69,6 +73,10 @@ function h(string $value): string
 body{font-family:var(--sans);background:var(--cream);color:var(--black);padding:48px 24px}
 .wrap{max-width:1200px;margin:0 auto}
 .topbar{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:32px}
+.brand-mark{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--black);flex-shrink:0}
+.brand-mark img{width:48px;height:48px;object-fit:contain}
+.brand-copy{font-family:var(--serif);font-size:1rem;line-height:1.15}
+.brand-copy em{font-style:italic;color:var(--red)}
 .title{font-family:var(--serif);font-size:clamp(2.4rem,5vw,4rem);line-height:1}
 .title em{font-style:italic;color:var(--red)}
 .sub{max-width:480px;color:var(--gray);line-height:1.7;font-size:.95rem}
@@ -117,6 +125,7 @@ td{font-size:.94rem}
 @media (max-width:768px){
   body{padding:28px 14px}
   .topbar{flex-direction:column;align-items:start}
+  .brand-mark{align-self:flex-start}
 }
 </style>
 </head>
@@ -131,6 +140,10 @@ td{font-size:.94rem}
         <a class="link-btn" href="dashboard.php">Dashboard</a>
       </div>
     </div>
+    <a class="brand-mark" href="index.html" aria-label="Bloodline home">
+      <img src="assets/logo.png" alt="Bloodline" onerror="this.onerror=null;this.src='assets/logow.png';">
+      <div class="brand-copy">Online <em>Blood Bank</em><br>Management</div>
+    </a>
   </div>
 
   <?php if ($flashSuccess !== ''): ?>

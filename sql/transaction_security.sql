@@ -1,5 +1,9 @@
 USE bloodline_db;
 
+-- Final ERD hybrid note:
+-- `Supplies` has been removed from the schema, while request/inventory workflow
+-- tables are retained so the live application can keep transaction-safe fulfillment.
+
 CREATE TABLE IF NOT EXISTS Request_Transaction_Log (
     LogID INT AUTO_INCREMENT PRIMARY KEY,
     ReqID INT NOT NULL,
