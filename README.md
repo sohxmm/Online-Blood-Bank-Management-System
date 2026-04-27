@@ -1,30 +1,21 @@
-﻿# Bloodline — Online Blood Bank Management System
+﻿# Bloodline - Online Blood Bank Management System
 
-> A full-stack web application for managing blood bank inventory, donor registrations, and hospital blood requests — built as a Web Programming & RDBMS lab mini project.
-
----
+> A full-stack web application for managing blood bank inventory, donor registrations, and hospital blood requests, designed as a deployable blood inventory and request coordination service.
 
 ## Overview
 
-Bloodline is an online blood bank management platform that connects donors, blood banks, and hospitals. It provides real-time inventory tracking, robust donor registration, urgent blood requests, and a modern session/cookie layer that keeps donor preferences, remembered devices, and form state secure while maintaining the premium UI.
-
----
+Bloodline connects donors, blood banks, and hospitals through real-time inventory tracking, donor registration, urgent blood requests, secure sessions, CSRF protection, and transaction-aware request processing.
 
 ## Features
 
-- **Live Inventory Dashboard** — Visual bubble-map of all 8 blood types with real-time unit counts and critical stock alerts
-- **Donor Registration** — Full medical history form with Aadhaar verification, health questionnaire, allergy screening, and password-protected accounts
-- **Blood Request System** — Hospitals can submit urgent/scheduled blood requests by type, with urgency levels and patient details
-- **Transaction-Safe Request Processing** — Request fulfillment, revert, and delete actions keep inventory synchronized using commit/rollback logic
-- **Relational Database** — Normalised MySQL schema covering donors, blood banks, hospitals, donations, and requests — based on a full EER diagram
-- **Audit + Access Control** — Transaction events are captured in `Request_Transaction_Log`, and operator/auditor privileges are defined in `sql/transaction_security.sql`
-- **Dark/Light Mode** — System-wide theme toggle across all pages
-- **Custom Cursor + GSAP Animations** — Smooth entrance animations and floating bubble effects
-- **Secure Sessions & Cookies** — Shared auth helper centralizes session boot, CSRF, and persistent remember-me cookies
-- **Site Preference Utilities** — `assets/site-prefs.js` keeps theme and last-page cookies in sync across every page
-- **CSRF Token Platform** — Login, registration, contact, and the AJAX blood request form all carry tokens managed by `auth.php` and `csrf_token.php`
-
----
+- **Live Inventory Dashboard** - Real-time unit counts and critical stock alerts for all 8 blood groups.
+- **Donor Registration** - Medical history, eligibility inputs, contact details, and password-protected donor accounts.
+- **Blood Request System** - Hospital and patient request intake with urgency, blood group, and unit requirements.
+- **Transaction-Safe Request Processing** - Fulfillment, update, revert, and delete actions keep `Blood_Inventory` synchronized.
+- **Operations Console** - Database-backed metrics, low-stock reporting, and request fulfillment routines.
+- **Query Performance Console** - Managed indexes and EXPLAIN output for request dashboard queries.
+- **Audit + Access Control** - Transaction events in `Request_Transaction_Log` and SQL roles in `sql/transaction_security.sql`.
+- **Secure Sessions & Cookies** - Shared auth helper, remember-me tokens, CSRF validation, and site preference cookies.
 
 ## Tech Stack
 
@@ -32,153 +23,112 @@ Bloodline is an online blood bank management platform that connects donors, bloo
 |---|---|
 | Frontend | HTML5, CSS3, Vanilla JS |
 | Animations | GSAP 3 + ScrollTrigger |
-| Typography | Cormorant Garamond, DM Sans (Google Fonts) |
 | Backend | PHP 8.2 |
-| Database | MySQL 8 via phpMyAdmin |
-| Server | Apache (XAMPP) |
-
----
+| Database | MySQL / MariaDB |
+| Local Server | Apache via XAMPP |
+| Configuration | Environment variables with local defaults |
 
 ## Project Structure
 
-```
+```text
 bloodlines/
-├── index.html               # Landing page
-├── registration.php         # Donor registration form
-├── make-request.html        # Blood request page
-├── inventory.html           # Live inventory dashboard
-├── db.php                   # Database connection
-├── register.php             # Handles donor form POST → MySQL
-├── submit_request.php       # Handles blood request POST → MySQL
-├── get_inventory.php        # Returns live inventory as JSON
-├── auth.php                 # Shared session, CSRF, remember-me helper
-├── csrf_token.php           # Lightweight async CSRF endpoint
-├── assets/site-prefs.js     # Theme + last-page cookie utilities
-├── gsap.min.js              # GSAP core
-├── ScrollTrigger.min.js     # GSAP ScrollTrigger plugin
-└── assets/
-    ├── logo.png
-    ├── logo-light.png
-    ├── logo-dark.png
-    ├── logow.png
-    ├── hero-img.png
-    ├── feature1.jpg
-    ├── feature2.jpg
-    ├── img6.jpg – img8.jpg
-    ├── risha2.png
-    └── sk.png
++-- index.html
++-- registration.php
++-- make-request.html
++-- inventory.html
++-- dashboard.php
++-- manage_requests.php
++-- operations_console.php
++-- query_performance.php
++-- auth.php
++-- db.php
++-- register.php
++-- submit_request.php
++-- update_request.php
++-- delete_request.php
++-- get_inventory.php
++-- get_requests_feed.php
++-- dashboard_stats.php
++-- assets/
++-- sql/
+    +-- final_erd_hybrid_alignment.sql
+    +-- database_routines.sql
+    +-- performance_indexes.sql
+    +-- transaction_security.sql
++-- docs/                    # Protected project documentation and screenshots
 ```
-
----
 
 ## Database Schema
 
-The schema follows the final ER diagram in a **hybrid app schema** form: core academic entities stay aligned with the ERD, while operational tables needed by the running site remain in place.
-
-It currently contains **20 tables + 1 view**:
+The schema uses healthcare workflow entities plus operational tables for the running service.
 
 **Core entities:** `Donor`, `Blood_Bank`, `Hospital`, `Blood_Donations`, `Blood_Request`
 
-**ISA subtypes:** `Regular_Donor`, `First_Time_Donor`, `Government_BloodBank`, `Private_BloodBank`
-
-**Multi-valued attributes:** `Donor_Contact`, `BloodBank_Address`, `BloodBank_Contact`, `Hospital_Address`, `Hospital_Contact`
-
-**Relationship tables:** `Donates`, `Registers_At`
-
 **Operational extensions:** `Blood_Inventory`, `Request_Transaction_Log`, `Donor_Remember_Token`, `Contact_Messages`
 
-**View:** `vw_inventory` — aggregates total units per blood group
+**View:** `vw_inventory` aggregates total units per blood group.
 
-`Supplies` has been removed from the final schema because the live request/inventory workflow now uses `Blood_Request` + `Blood_Inventory` transaction logic instead of a donation-to-request bridge table.
+## Local Setup
 
----
+1. Start Apache and MySQL from XAMPP.
+2. Create `bloodline_db` in phpMyAdmin using `utf8mb4_unicode_ci`.
+3. Import `sql/final_erd_hybrid_alignment.sql`.
+4. Import `sql/database_routines.sql` for operational metrics and fulfillment helpers.
+5. Import `sql/performance_indexes.sql` when managed dashboard indexes are needed.
+6. Open `http://localhost/bloodlines/index.html`.
 
-## Setup & Installation
+For non-local environments, set these variables instead of relying on XAMPP defaults:
 
-### Prerequisites
-- [XAMPP](https://www.apachefriends.org/) (Apache + MySQL)
-- A browser
-
-### Steps
-
-**1. Clone the repository**
-```bash
-cd C:\xampp\htdocs
-git clone https://github.com/risha2211/Online-Blood-Bank-Management-System bloodlines
+```text
+BLOODLINE_DB_HOST=localhost
+BLOODLINE_DB_USER=bloodline_app
+BLOODLINE_DB_PASS=change-this-password
+BLOODLINE_DB_NAME=bloodline_db
 ```
-
-**2. Start XAMPP**
-
-Open XAMPP Control Panel → Start **Apache** and **MySQL**
-
-**3. Create the database**
-
-- Go to `http://localhost/phpmyadmin`
-- Create a new database named `bloodline_db` with collation `utf8mb4_unicode_ci`
-- Select the database → Import tab → upload `bloodline.sql` → Go
-- If you are aligning an older copy of the schema to the final ERD, import `sql/final_erd_hybrid_alignment.sql`
-  or simply load the app once; `db.php` applies the same compatibility pass automatically.
-
-**4. Open the app**
-
-```
-http://localhost/bloodlines/index.html
-```
-
----
 
 ## Pages
 
 | Page | URL | Description |
 |---|---|---|
-| Home | `/index.html` | Landing page with features, stats, and team section |
-| Register | `/registration.php` | Donor sign-up with full medical history |
-| Request Blood | `/make-request.html` | Select blood type and submit a request |
-| Manage Requests | `/manage_requests.php` | Transaction-aware request console with filter, update, delete, and inventory-safe fulfillment |
-| Inventory | `/inventory.html` | Live bubble view of current blood stock |
-| Experiment 6 Demo | `/exp6_routines_demo.php` | Stored procedure + function + cursor demo |
-
----
+| Home | `/index.html` | Public service overview with inventory preview |
+| Register | `/registration.php` | Donor registration and eligibility form |
+| Request Blood | `/make-request.html` | Blood request intake |
+| Dashboard | `/dashboard.php` | Authenticated donor/operator dashboard |
+| Manage Requests | `/manage_requests.php` | Transaction-aware request console |
+| Inventory | `/inventory.html` | Live blood stock dashboard |
+| Operations Console | `/operations_console.php` | Routine-backed metrics, stock alerts, and fulfillment |
+| Query Performance | `/query_performance.php` | Managed index controls and EXPLAIN output |
 
 ## API Endpoints
 
 | File | Method | Description |
 |---|---|---|
-| `register.php` | POST | Validates and inserts new donor into DB |
-| `submit_request.php` | POST (JSON) | Creates a new blood request record |
-| `update_request.php` | POST | Transaction-aware request update that keeps `Blood_Inventory` in sync |
-| `delete_request.php` | POST | Transaction-aware request delete that restores stock before removing fulfilled requests |
-| `get_inventory.php` | GET | Returns JSON of current blood unit counts per type |
+| `register.php` | POST | Validates and inserts a donor |
+| `submit_request.php` | POST JSON | Creates a blood request |
+| `update_request.php` | POST | Updates a request and reconciles inventory |
+| `delete_request.php` | POST | Deletes a request and restores fulfilled inventory |
+| `get_inventory.php` | GET | Returns live inventory JSON |
+| `dashboard_stats.php` | GET | Returns dashboard analytics JSON |
+| `get_requests_feed.php` | GET | Returns recent request feed JSON |
 
----
+## Deployment Readiness
 
-## TCL / DCL Integration
+This repository is now named and documented like a service, but it still needs hardening before public deployment or real patient/donor data handling:
 
-- `request_transaction.php` contains the transaction workflow for Bloodline request processing.
-- `update_request.php` now uses a write transaction, a savepoint, row locks, and commit/rollback logic before changing inventory-backed requests.
-- `delete_request.php` restores inventory inside the same transaction before deleting a fulfilled request.
-- `Request_Transaction_Log` stores an audit trail for each update/delete event.
-- `sql/transaction_security.sql` contains MySQL TCL and DCL commands for this project, including `START TRANSACTION`, `SAVEPOINT`, `COMMIT`, `CREATE ROLE`, `GRANT`, and `REVOKE`.
+- Move secrets to server environment variables and create a least-privilege MySQL user.
+- Put Apache behind HTTPS and enforce secure, HttpOnly, SameSite session cookies.
+- Replace public file-based navigation with role-based routing for donors, hospitals, operators, and admins.
+- Add strict server-side validation for every form field and rate-limit login, contact, and request endpoints.
+- Use migration files for schema changes instead of running compatibility changes during normal requests.
+- Add automated tests for registration, login, CSRF failure, request creation, fulfillment, revert, delete, and inventory totals.
+- Keep report documents, screenshots, and personal assets outside public routing; `docs/.htaccess` blocks direct Apache access locally.
+- Add backups and restore drills for `Blood_Inventory`, `Blood_Request`, `Donor`, and `Request_Transaction_Log`.
+- Add operational monitoring for PHP errors, failed logins, request failures, and low-stock events.
 
----
+## Maintainers
 
-## Contributors
-
-| Name | Roll No. |
-|---|---|
-| Risha Kanthe | 16010124129 |
-| Soham Kanase | 16010124128 |
-
----
-
-## Course
-
-**Web Programming & RDBMS Laboratory**
-Mini Project — Semester IV
-K.J. Somaiya School of Engineering
-
----
+Bloodline Service Team
 
 ## License
 
-This project was built for academic purposes as part of a lab course.
+Internal demonstration software. Complete production hardening before using it with real healthcare data.

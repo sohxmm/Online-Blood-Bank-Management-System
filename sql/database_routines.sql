@@ -1,4 +1,4 @@
--- Experiment 6 (RDBMS Lab): Procedures, Functions, and Cursors
+-- Bloodline production database routines
 -- Project: Bloodline (bloodline_db)
 -- DB: MariaDB/MySQL (XAMPP)
 --
@@ -8,9 +8,8 @@
 --
 -- Notes:
 -- - MySQL/MariaDB cursors exist only inside stored programs (procedures/functions).
--- - These routines are prefixed with exp6_* to keep them clearly scoped to the lab.
--- - The project now uses the final ERD in hybrid form: `Supplies` is removed, while
---   `Blood_Request` and `Blood_Inventory` remain as operational workflow tables.
+-- - These routines provide dashboard metrics, low-stock reporting, and inventory-safe
+--   request fulfillment for the running Bloodline service.
 
 DELIMITER $$
 
@@ -18,8 +17,8 @@ DELIMITER $$
 -- Functions
 -- -----------------------------
 
-DROP FUNCTION IF EXISTS fn_exp6_donor_count $$
-CREATE FUNCTION fn_exp6_donor_count()
+DROP FUNCTION IF EXISTS fn_donor_count $$
+CREATE FUNCTION fn_donor_count()
 RETURNS INT
 DETERMINISTIC
 READS SQL DATA
@@ -29,8 +28,8 @@ BEGIN
     RETURN total_records;
 END $$
 
-DROP FUNCTION IF EXISTS fn_exp6_pending_request_count $$
-CREATE FUNCTION fn_exp6_pending_request_count()
+DROP FUNCTION IF EXISTS fn_pending_request_count $$
+CREATE FUNCTION fn_pending_request_count()
 RETURNS INT
 DETERMINISTIC
 READS SQL DATA
@@ -42,8 +41,8 @@ BEGIN
     RETURN total_records;
 END $$
 
-DROP FUNCTION IF EXISTS fn_exp6_total_units_available $$
-CREATE FUNCTION fn_exp6_total_units_available()
+DROP FUNCTION IF EXISTS fn_total_units_available $$
+CREATE FUNCTION fn_total_units_available()
 RETURNS INT
 DETERMINISTIC
 READS SQL DATA
@@ -58,8 +57,8 @@ END $$
 -- Cursor-based procedure
 -- -----------------------------
 
-DROP PROCEDURE IF EXISTS sp_exp6_low_stock_report $$
-CREATE PROCEDURE sp_exp6_low_stock_report(IN p_threshold INT)
+DROP PROCEDURE IF EXISTS sp_low_stock_report $$
+CREATE PROCEDURE sp_low_stock_report(IN p_threshold INT)
 BEGIN
     DECLARE done INT DEFAULT 0;
     DECLARE v_blood_group VARCHAR(5);
@@ -103,8 +102,8 @@ END $$
 -- Transactional procedure (transfer-like)
 -- -----------------------------
 
-DROP PROCEDURE IF EXISTS sp_exp6_fulfill_request $$
-CREATE PROCEDURE sp_exp6_fulfill_request(IN p_req_id INT)
+DROP PROCEDURE IF EXISTS sp_fulfill_request $$
+CREATE PROCEDURE sp_fulfill_request(IN p_req_id INT)
 main: BEGIN
     DECLARE v_blood_group VARCHAR(5);
     DECLARE v_units_requested INT;
@@ -203,8 +202,8 @@ DELIMITER ;
 -- -----------------------------
 -- Example calls (run after install)
 -- -----------------------------
--- SELECT fn_exp6_donor_count() AS donor_count;
--- SELECT fn_exp6_pending_request_count() AS pending_requests;
--- SELECT fn_exp6_total_units_available() AS total_units;
--- CALL sp_exp6_low_stock_report(4);
--- CALL sp_exp6_fulfill_request(1);
+-- SELECT fn_donor_count() AS donor_count;
+-- SELECT fn_pending_request_count() AS pending_requests;
+-- SELECT fn_total_units_available() AS total_units;
+-- CALL sp_low_stock_report(4);
+-- CALL sp_fulfill_request(1);

@@ -33,7 +33,7 @@ while ($row = $result->fetch_assoc()) {
 }
 
 $totalUnits = null;
-$statsRes = $db->query('SELECT fn_exp6_total_units_available() AS total');
+$statsRes = $db->query('SELECT fn_total_units_available() AS total');
 if ($statsRes) {
     $statsRow = $statsRes->fetch_assoc() ?: [];
     $totalUnits = (int) ($statsRow['total'] ?? 0);
@@ -48,7 +48,7 @@ if ($statsRes) {
 }
 
 $pendingRequests = null;
-$reqRes = $db->query('SELECT fn_exp6_pending_request_count() AS cnt');
+$reqRes = $db->query('SELECT fn_pending_request_count() AS cnt');
 if ($reqRes) {
     $reqRow = $reqRes->fetch_assoc() ?: [];
     $pendingRequests = (int) ($reqRow['cnt'] ?? 0);

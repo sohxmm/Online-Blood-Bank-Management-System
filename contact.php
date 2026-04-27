@@ -222,12 +222,12 @@ body.dark-mode .theme-toggle-icon{transform:rotate(25deg);}
     <div class="contact-strip-value">Mumbai, India</div>
   </div>
   <div class="contact-strip-item">
-    <div class="contact-strip-label">Project</div>
-    <div class="contact-strip-value">Web Programming Lab · SY B.Tech</div>
+    <div class="contact-strip-label">Service</div>
+    <div class="contact-strip-value">Blood inventory coordination</div>
   </div>
   <div class="contact-strip-item">
-    <div class="contact-strip-label">Institution</div>
-    <div class="contact-strip-value">K.J. Somaiya School of Engineering</div>
+    <div class="contact-strip-label">Support</div>
+    <div class="contact-strip-value">Operations response desk</div>
   </div>
 </div>
 

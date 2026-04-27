@@ -1,5 +1,5 @@
-<?php
-// Experiment 6 demo page — Procedures, Functions, Cursors (MySQL/MariaDB)
+﻿<?php
+// Operations console page for production database routines.
 
 require_once 'auth.php';
 require_once 'db.php';
@@ -31,20 +31,20 @@ function try_scalar(mysqli $db, string $sql, string $key): ?int
     return isset($row[$key]) ? (int) $row[$key] : null;
 }
 
-$installHint = 'Install the Experiment 6 routines first by running '
-    . 'sql/exp6_procedure_function_cursor.sql in phpMyAdmin (bloodline_db).';
+$installHint = 'Install the production database routines first by running '
+    . 'sql/database_routines.sql in phpMyAdmin (bloodline_db).';
 
-$donorCount = try_scalar($db, 'SELECT fn_exp6_donor_count() AS cnt', 'cnt');
+$donorCount = try_scalar($db, 'SELECT fn_donor_count() AS cnt', 'cnt');
 if ($donorCount === null) {
     $donorCount = try_scalar($db, 'SELECT COUNT(*) AS cnt FROM Donor', 'cnt') ?? 0;
 }
 
-$pendingCount = try_scalar($db, 'SELECT fn_exp6_pending_request_count() AS cnt', 'cnt');
+$pendingCount = try_scalar($db, 'SELECT fn_pending_request_count() AS cnt', 'cnt');
 if ($pendingCount === null) {
     $pendingCount = try_scalar($db, "SELECT COUNT(*) AS cnt FROM Blood_Request WHERE Status='Pending'", 'cnt') ?? 0;
 }
 
-$totalUnits = try_scalar($db, 'SELECT fn_exp6_total_units_available() AS total', 'total');
+$totalUnits = try_scalar($db, 'SELECT fn_total_units_available() AS total', 'total');
 if ($totalUnits === null) {
     $totalUnits = try_scalar($db, 'SELECT COALESCE(SUM(UnitsAvailable), 0) AS total FROM Blood_Inventory', 'total') ?? 0;
 }
@@ -71,13 +71,13 @@ $fulfillResult = null;
 $fulfillError = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_csrf_token($_POST['csrf_token'] ?? null, 'exp6_routines_demo.php');
+    require_csrf_token($_POST['csrf_token'] ?? null, 'operations_console.php');
 
     $action = (string) ($_POST['action'] ?? '');
 
     if ($action === 'low_stock') {
         $lowStockThreshold = max(0, (int) ($_POST['threshold'] ?? 4));
-        $stmt = $db->prepare('CALL sp_exp6_low_stock_report(?)');
+        $stmt = $db->prepare('CALL sp_low_stock_report(?)');
 
         if (!$stmt) {
             $lowStockError = $installHint;
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'fulfill_request') {
         $fulfillRequestId = (int) ($_POST['request_id'] ?? 0);
-        $stmt = $db->prepare('CALL sp_exp6_fulfill_request(?)');
+        $stmt = $db->prepare('CALL sp_fulfill_request(?)');
 
         if (!$stmt) {
             $fulfillError = $installHint;
@@ -130,7 +130,7 @@ function h(string $value): string
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Procedures, Functions, Cursors</title>
+  <title>Operations Console</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -167,9 +167,9 @@ function h(string $value): string
   <div class="wrap">
     <div class="top">
       <div>
-        <h1><em>Procedures</em>, Functions & Cursors</h1>
+        <h1><em>Operations</em> Console</h1>
         <p class="sub">
-          Live demo page for DB routines defined in <code>sql/exp6_procedure_function_cursor.sql</code>.
+          Operational database routine console backed by <code>sql/database_routines.sql</code>.
           If a routine is missing, run the SQL file in phpMyAdmin (database: <code>bloodline_db</code>).
         </p>
       </div>
@@ -179,7 +179,7 @@ function h(string $value): string
     </div>
 
     <div class="card">
-      <h2 style="font-family:var(--serif);margin-bottom:10px">Stored Functions</h2>
+      <h2 style="font-family:var(--serif);margin-bottom:10px">Operational Metrics</h2>
       <div class="grid">
         <div class="metric">
           <div class="val"><?= (int) $donorCount ?></div>
@@ -195,14 +195,14 @@ function h(string $value): string
         </div>
       </div>
       <p class="sub" style="margin-top:12px">
-        Queries used: <code>SELECT fn_exp6_donor_count()</code>,
-        <code>SELECT fn_exp6_pending_request_count()</code>,
-        <code>SELECT fn_exp6_total_units_available()</code>.
+        Metric routines: <code>SELECT fn_donor_count()</code>,
+        <code>SELECT fn_pending_request_count()</code>,
+        <code>SELECT fn_total_units_available()</code>.
       </p>
     </div>
 
     <div class="card">
-      <h2 style="font-family:var(--serif);margin-bottom:10px">Cursor Demo (Low Stock Report)</h2>
+      <h2 style="font-family:var(--serif);margin-bottom:10px">Low Stock Report</h2>
       <form method="POST" class="row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
         <input type="hidden" name="action" value="low_stock">
@@ -240,9 +240,9 @@ function h(string $value): string
     </div>
 
     <div class="card">
-      <h2 style="font-family:var(--serif);margin-bottom:10px">Stored Procedure Demo (Fulfill Request)</h2>
+      <h2 style="font-family:var(--serif);margin-bottom:10px">Request Fulfillment Routine</h2>
       <p class="sub">
-        Calls <code>CALL sp_exp6_fulfill_request(req_id)</code>. It runs a transaction that locks the request + inventory row,
+        Runs <code>CALL sp_fulfill_request(req_id)</code>. It runs a transaction that locks the request + inventory row,
         checks available units, then subtracts units and sets status to <code>Fulfilled</code>.
       </p>
       <form method="POST" class="row" style="margin-top:12px">
@@ -280,8 +280,8 @@ function h(string $value): string
               <td><?= (int) ($fulfillResult['request_id'] ?? 0) ?></td>
               <td><?= h((string) ($fulfillResult['blood_group'] ?? '')) ?></td>
               <td><?= (int) ($fulfillResult['units_requested'] ?? 0) ?></td>
-              <td><?= isset($fulfillResult['units_available_before']) ? (int) $fulfillResult['units_available_before'] : '—' ?></td>
-              <td><?= isset($fulfillResult['units_available_after']) ? (int) $fulfillResult['units_available_after'] : '—' ?></td>
+              <td><?= isset($fulfillResult['units_available_before']) ? (int) $fulfillResult['units_available_before'] : 'â€”' ?></td>
+              <td><?= isset($fulfillResult['units_available_after']) ? (int) $fulfillResult['units_available_after'] : 'â€”' ?></td>
               <td><?= h((string) ($fulfillResult['status'] ?? '')) ?></td>
             </tr>
           </tbody>

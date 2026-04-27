@@ -1,5 +1,5 @@
-<?php
-// Experiment 7 demo page — Indexing & Query Processing (MariaDB/MySQL)
+﻿<?php
+// Query performance console for managed database indexes.
 
 require_once 'auth.php';
 require_once 'db.php';
@@ -93,7 +93,7 @@ function run_explain(mysqli $db, string $sql): array
     ];
 }
 
-function fetch_exp7_index_details(mysqli $db): array
+function fetch_performance_index_details(mysqli $db): array
 {
     $stmt = $db->prepare(
         "SELECT table_name AS TableName,
@@ -103,7 +103,12 @@ function fetch_exp7_index_details(mysqli $db): array
                 non_unique AS NonUnique
          FROM information_schema.statistics
          WHERE table_schema = DATABASE()
-           AND index_name LIKE 'idx\\_exp7\\_%'
+           AND index_name IN (
+               'idx_br_status_reqdate_reqid',
+               'idx_br_requestdate_status',
+               'idx_hospital_name',
+               'idx_br_requesterphone_reqdate'
+           )
          ORDER BY table_name, index_name, seq_in_index"
     );
     if (!$stmt) {
@@ -121,34 +126,34 @@ function fetch_exp7_index_details(mysqli $db): array
     return $rows;
 }
 
-$exp7Indexes = [
+$performanceIndexes = [
     [
         'table' => 'Blood_Request',
-        'name' => 'idx_exp7_br_status_reqdate_reqid',
+        'name' => 'idx_br_status_reqdate_reqid',
         'purpose' => 'WHERE Status + ORDER BY RequestDate/ReqID',
-        'create_sql' => 'CREATE INDEX `idx_exp7_br_status_reqdate_reqid` ON `Blood_Request` (`Status`, `RequestDate`, `ReqID`)',
-        'drop_sql' => 'DROP INDEX `idx_exp7_br_status_reqdate_reqid` ON `Blood_Request`',
+        'create_sql' => 'CREATE INDEX `idx_br_status_reqdate_reqid` ON `Blood_Request` (`Status`, `RequestDate`, `ReqID`)',
+        'drop_sql' => 'DROP INDEX `idx_br_status_reqdate_reqid` ON `Blood_Request`',
     ],
     [
         'table' => 'Blood_Request',
-        'name' => 'idx_exp7_br_requestdate_status',
+        'name' => 'idx_br_requestdate_status',
         'purpose' => 'Date range + GROUP BY Status',
-        'create_sql' => 'CREATE INDEX `idx_exp7_br_requestdate_status` ON `Blood_Request` (`RequestDate`, `Status`)',
-        'drop_sql' => 'DROP INDEX `idx_exp7_br_requestdate_status` ON `Blood_Request`',
+        'create_sql' => 'CREATE INDEX `idx_br_requestdate_status` ON `Blood_Request` (`RequestDate`, `Status`)',
+        'drop_sql' => 'DROP INDEX `idx_br_requestdate_status` ON `Blood_Request`',
     ],
     [
         'table' => 'Hospital',
-        'name' => 'idx_exp7_hospital_name',
+        'name' => 'idx_hospital_name',
         'purpose' => 'Lookup hospital by name',
-        'create_sql' => 'CREATE INDEX `idx_exp7_hospital_name` ON `Hospital` (`Name`)',
-        'drop_sql' => 'DROP INDEX `idx_exp7_hospital_name` ON `Hospital`',
+        'create_sql' => 'CREATE INDEX `idx_hospital_name` ON `Hospital` (`Name`)',
+        'drop_sql' => 'DROP INDEX `idx_hospital_name` ON `Hospital`',
     ],
     [
         'table' => 'Blood_Request',
-        'name' => 'idx_exp7_br_requesterphone_reqdate',
+        'name' => 'idx_br_requesterphone_reqdate',
         'purpose' => 'Dashboard-style WHERE RequesterPhone',
-        'create_sql' => 'CREATE INDEX `idx_exp7_br_requesterphone_reqdate` ON `Blood_Request` (`RequesterPhone`, `RequestDate`)',
-        'drop_sql' => 'DROP INDEX `idx_exp7_br_requesterphone_reqdate` ON `Blood_Request`',
+        'create_sql' => 'CREATE INDEX `idx_br_requesterphone_reqdate` ON `Blood_Request` (`RequesterPhone`, `RequestDate`)',
+        'drop_sql' => 'DROP INDEX `idx_br_requesterphone_reqdate` ON `Blood_Request`',
     ],
 ];
 
@@ -159,7 +164,7 @@ $queries = [
     ],
     'SELECT with WHERE clause' => [
         'sql' => "SELECT ReqID, BloodGroup, UnitsRequested, Urgency, Status, RequestDate\nFROM Blood_Request\nWHERE Status = 'Pending'\nLIMIT 20",
-        'note' => "Uses a filter on Status (benefits from idx_exp7_br_status_reqdate_reqid).",
+        'note' => "Uses a filter on Status (benefits from idx_br_status_reqdate_reqid).",
     ],
     'SELECT with ORDER BY' => [
         'sql' => "SELECT ReqID, BloodGroup, UnitsRequested, Urgency, Status, RequestDate\nFROM Blood_Request\nWHERE Status = 'Pending'\nORDER BY RequestDate DESC, ReqID DESC\nLIMIT 20",
@@ -167,7 +172,7 @@ $queries = [
     ],
     'SELECT with JOIN' => [
         'sql' => "SELECT br.ReqID, br.BloodGroup, br.UnitsRequested, br.Urgency, br.Status, br.RequestDate,\n       h.Name AS HospitalName\nFROM Blood_Request br\nLEFT JOIN Hospital h ON h.HospitalID = br.HospitalID\nWHERE br.Status = 'Pending'\nORDER BY br.RequestDate DESC, br.ReqID DESC\nLIMIT 20",
-        'note' => 'JOIN query (request ↔ hospital).',
+        'note' => 'JOIN query (request â†” hospital).',
     ],
     'SELECT with Aggregation' => [
         'sql' => "SELECT Status,\n       COUNT(*) AS TotalRequests,\n       COALESCE(SUM(UnitsRequested), 0) AS UnitsRequested\nFROM Blood_Request\nWHERE RequestDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)\nGROUP BY Status\nORDER BY TotalRequests DESC",
@@ -179,15 +184,15 @@ $flash = pull_flash('flash_error');
 $notice = '';
 $planResults = [];
 $ddlResults = [];
-$exp7IndexDetails = [];
+$performanceIndexDetails = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_csrf_token($_POST['csrf_token'] ?? null, 'exp7_indexing_demo.php');
+    require_csrf_token($_POST['csrf_token'] ?? null, 'query_performance.php');
 
     $action = (string) ($_POST['action'] ?? '');
 
     if ($action === 'install_indexes' || $action === 'remove_indexes') {
-        foreach ($exp7Indexes as $idx) {
+        foreach ($performanceIndexes as $idx) {
             $exists = index_exists($db, $idx['table'], $idx['name']);
 
             if ($action === 'install_indexes') {
@@ -226,8 +231,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $notice = $action === 'install_indexes'
-            ? 'Experiment 7 indexes applied.'
-            : 'Experiment 7 indexes removed.';
+            ? 'Performance indexes applied.'
+            : 'Performance indexes removed.';
     }
 
     if ($action === 'run_plans') {
@@ -238,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$exp7IndexDetails = fetch_exp7_index_details($db);
+$performanceIndexDetails = fetch_performance_index_details($db);
 
 function pill(bool $ok): string
 {
@@ -255,7 +260,7 @@ function pill(bool $ok): string
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Experiment 7 — Indexing & Query Processing</title>
+  <title>Query Performance â€” Indexing & Query Processing</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -295,7 +300,7 @@ function pill(bool $ok): string
   <div class="wrap">
     <div class="top">
       <div>
-        <h1>Experiment <em>7</em> — Indexing & Query Processing</h1>
+        <h1>Query <em>Performance</em> â€” Indexing & Query Processing</h1>
         <p class="sub">
           Demonstrates how indexes change query plans using <code>EXPLAIN</code> / <code>EXPLAIN ANALYZE</code>.
           This project runs on MariaDB (XAMPP). If <code>EXPLAIN ANALYZE</code> is unavailable, the page falls back to
@@ -318,14 +323,14 @@ function pill(bool $ok): string
     <div class="card">
       <div class="grid">
         <div>
-          <h2 style="font-family:var(--serif);margin-bottom:8px">Experiment Indexes</h2>
+          <h2 style="font-family:var(--serif);margin-bottom:8px">Performance Indexes</h2>
           <p class="sub" style="margin-bottom:10px">
-            These indexes use a dedicated <code>idx_exp7_</code> prefix so you can safely create/drop them while taking screenshots.
+            These managed indexes support dashboard filters, request queues, and hospital lookups.
           </p>
           <form method="POST" class="row" style="margin-bottom:12px">
             <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
-            <button class="btn" type="submit" name="action" value="install_indexes">Install Exp7 Indexes</button>
-            <button class="btn secondary" type="submit" name="action" value="remove_indexes">Remove Exp7 Indexes</button>
+            <button class="btn" type="submit" name="action" value="install_indexes">Install Performance Indexes</button>
+            <button class="btn secondary" type="submit" name="action" value="remove_indexes">Remove Performance Indexes</button>
           </form>
 
           <?php if ($ddlResults): ?>
@@ -337,8 +342,8 @@ function pill(bool $ok): string
           <?php endif; ?>
 
           <h3 style="margin-top:16px;font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray)">Index Evidence (DB)</h3>
-          <?php if (!$exp7IndexDetails): ?>
-            <p class="sub">No <code>idx_exp7_*</code> indexes are currently present in the database.</p>
+          <?php if (!$performanceIndexDetails): ?>
+            <p class="sub">No managed performance indexes are currently present in the database.</p>
           <?php else: ?>
             <table>
               <thead>
@@ -351,7 +356,7 @@ function pill(bool $ok): string
                 </tr>
               </thead>
               <tbody>
-                <?php foreach ($exp7IndexDetails as $row): ?>
+                <?php foreach ($performanceIndexDetails as $row): ?>
                   <tr>
                     <td><?= h((string) ($row['TableName'] ?? '')) ?></td>
                     <td><?= h((string) ($row['IndexName'] ?? '')) ?></td>
@@ -366,12 +371,12 @@ function pill(bool $ok): string
         </div>
 
         <div class="idx">
-          <?php foreach ($exp7Indexes as $idx): ?>
+          <?php foreach ($performanceIndexes as $idx): ?>
             <?php $present = index_exists($db, $idx['table'], $idx['name']); ?>
             <div class="idx-item">
               <div class="meta">
                 <div class="name"><?= h($idx['name']) ?></div>
-                <div class="purpose"><?= h($idx['table'] . ' — ' . $idx['purpose']) ?></div>
+                <div class="purpose"><?= h($idx['table'] . ' â€” ' . $idx['purpose']) ?></div>
               </div>
               <div <?= pill($present) ?>><?= $present ? 'Present' : 'Missing' ?></div>
             </div>
@@ -383,7 +388,7 @@ function pill(bool $ok): string
     <div class="card">
       <h2 style="font-family:var(--serif);margin-bottom:8px">Generate Query Plans</h2>
       <p class="sub" style="margin-bottom:10px">
-        Recommended lab flow: (1) Remove Exp7 indexes → Run plans → take screenshots. (2) Install Exp7 indexes → Run plans → take screenshots again.
+        Use this console to compare query plans before and after applying the managed performance indexes.
       </p>
       <form method="POST" class="row">
         <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
@@ -401,7 +406,7 @@ function pill(bool $ok): string
 
         <h3 style="margin-top:14px;font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gray)">Plan</h3>
         <?php if (!$res): ?>
-          <p class="sub">Click “Run EXPLAIN for All Queries” to generate the plan.</p>
+          <p class="sub">Click â€œRun EXPLAIN for All Queriesâ€ to generate the plan.</p>
         <?php elseif ($res['kind'] === 'text'): ?>
           <div class="sub" style="margin-bottom:8px">Method: <code><?= h($res['label']) ?></code></div>
           <pre><?= h($res['value']) ?></pre>
